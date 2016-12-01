@@ -201,8 +201,8 @@ class SmartPlug:
 
         response = TPLinkSmartHomeProtocol.query(
             host=self.ip_address,
-            request={'emeter': {'get_daystat': {'month': str(month),
-                                                'year': str(year)}}}
+            request={'emeter': {'get_daystat': {'month': month,
+                                                'year': year}}}
         )['emeter']['get_daystat']
 
         if response['err_code'] != 0:
@@ -224,7 +224,7 @@ class SmartPlug:
 
         response = TPLinkSmartHomeProtocol.query(
             host=self.ip_address,
-            request={'emeter': {'get_monthstat': {'year': str(year)}}}
+            request={'emeter': {'get_monthstat': {'year': year}}}
         )['emeter']['get_monthstat']
 
         if response['err_code'] != 0:
@@ -316,12 +316,20 @@ class TPLinkSmartHomeProtocol:
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((host, port))
+        _LOGGER.debug("> (%i) %s" % (len(request), request))
         sock.send(TPLinkSmartHomeProtocol.encrypt(request))
-        buffer = sock.recv(4096)[4:]
+        buffer = bytes()
+        while True:
+            chunk = sock.recv(4096)
+            buffer += chunk
+            #_LOGGER.debug("Got chunk %s" % len(chunk))
+            if len(chunk) == 0:
+                break
         sock.shutdown(socket.SHUT_RDWR)
         sock.close()
 
-        response = TPLinkSmartHomeProtocol.decrypt(buffer)
+        response = TPLinkSmartHomeProtocol.decrypt(buffer[4:])
+        _LOGGER.debug("< (%i) %s" % (len(response), response))
         return json.loads(response)
 
     @staticmethod
