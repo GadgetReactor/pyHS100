@@ -33,6 +33,11 @@ print("Current state: %s" % plug.state)
 plug.turn_off()
 plug.turn_on()
 ```
+or
+```python
+plug.state = False
+plug.state = True
+```
 
 ## Getting emeter status (on HS110)
 ```python

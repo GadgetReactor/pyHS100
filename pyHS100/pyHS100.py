@@ -33,8 +33,8 @@ class SmartPlug:
     # print the devices alias
     print(p.alias)
     # change state of plug
-    p.state = "OFF"
-    p.state = "ON"
+    p.state = False
+    p.state = True
     # query and print current state of plug
     print(p.state)
 
@@ -92,8 +92,8 @@ class SmartPlug:
         Retrieve the switch state
 
         :returns: one of
-                  SWITCH_STATE_ON
-                  SWITCH_STATE_OFF
+                  True
+                  False
                   SWITCH_STATE_UNKNOWN
         """
         relay_state = self.sys_info['relay_state']
@@ -112,8 +112,8 @@ class SmartPlug:
         Set the new switch state
 
         :param value: one of
-                    SWITCH_STATE_ON
-                    SWITCH_STATE_OFF
+                    True
+                    False
         :return: True if new state was successfully set
                  False if an error occured
         """
@@ -130,28 +130,23 @@ class SmartPlug:
 
         :return: dict sysinfo
         """
-
         return self._query_helper("system", "get_sysinfo")
 
     def turn_on(self):
         """
         Turn the switch on.
 
-        :return: True on success
-        :raises ProtocolError when device responds with err_code != 0
+        :return:
         """
-
-        return self._query_helper("system", "set_relay_state", {"state": 1})
+        self.state = True
 
     def turn_off(self):
         """
         Turn the switch off.
 
-        :return: True on success
-                 False on error
+        :return:
         """
-
-        return self._query_helper("system", "set_relay_state", {"state": 0})
+        self.state = False
 
     @property
     def has_emeter(self):
@@ -311,8 +306,8 @@ class SmartPlug:
         :param icon:
         """
         raise NotImplementedError()
-
-        self._query_helper("system", "set_dev_icon", {"icon": "", "hash": ""})
+        # here just for the sake of completeness
+        # self._query_helper("system", "set_dev_icon", {"icon": "", "hash": ""})
 
     @property
     def time(self):
@@ -332,7 +327,7 @@ class SmartPlug:
         :return:
         """
         raise NotImplemented("Setting time does not seem to work on HS110 although it returns no error.")
-
+        """ here just for the sake of completeness / if someone figures out why it doesn't work.
         ts_obj = {
             "index": self.timezone["index"],
             "hour": ts.hour,
@@ -344,6 +339,7 @@ class SmartPlug:
         }
 
         return self._query_helper("time", "set_timezone", ts_obj)
+        """
 
     @property
     def timezone(self):
