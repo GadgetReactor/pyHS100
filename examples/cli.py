@@ -1,7 +1,7 @@
 import sys
 import logging
 
-from pyHS100.pyHS100 import SmartPlug
+from pyHS100 import SmartPlug
 
 logging.basicConfig(level=logging.DEBUG)
 
