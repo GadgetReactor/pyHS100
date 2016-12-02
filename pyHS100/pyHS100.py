@@ -82,7 +82,7 @@ class SmartPlug:
 
         result = response[target][cmd]
         if result["err_code"] != 0:
-            raise SmartPlugException("Error on %s.%s: %s" % (target, cmd, result))
+            raise SmartPlugException("Error on %s.%s: %s".format(target, cmd, result))
 
         return result
 
@@ -277,7 +277,6 @@ class SmartPlug:
         Sets the device name aka alias.
         :param alias: New alias (name)
         """
-
         self._query_helper("system", "set_dev_alias", {"alias": alias})
 
     @property
@@ -286,7 +285,7 @@ class SmartPlug:
         Returns the state of the led.
         :return:
         """
-        return {"led": 1 - self.sys_info["led_off"]}
+        return bool(1 - self.sys_info["led_off"])
 
     @led.setter
     def led(self, state):
@@ -294,7 +293,6 @@ class SmartPlug:
         Sets the state of the led (night mode)
         :param state: 1 to set led on, 0 to set led off
         """
-
         self._query_helper("system", "set_led_off", {"off": 1 - state})
 
     @property
@@ -312,8 +310,7 @@ class SmartPlug:
         Content for hash and icon are unknown.
         :param icon:
         """
-
-        raise SmartPlugNotImplementedException()
+        raise NotImplementedError()
 
         self._query_helper("system", "set_dev_icon", {"icon": "", "hash": ""})
 
@@ -323,11 +320,8 @@ class SmartPlug:
         Returns current time from the device.
         :return: datetime for device's time
         """
-
         response = self._query_helper("time", "get_time")
-        ts = datetime.datetime(response["year"], response["month"], response["mday"], response["hour"], response["min"], response["sec"])
-
-        return ts
+        return datetime.datetime(response["year"], response["month"], response["mday"], response["hour"], response["min"], response["sec"])
 
     @time.setter
     def time(self, ts):
@@ -337,8 +331,7 @@ class SmartPlug:
         :param ts: New timestamp
         :return:
         """
-
-        raise SmartPlugNotImplementedException("Setting time does not seem to work on HS110 although it returns no error.")
+        raise NotImplemented("Setting time does not seem to work on HS110 although it returns no error.")
 
         ts_obj = {
             "index": self.timezone["index"],
@@ -358,7 +351,6 @@ class SmartPlug:
         Returns timezone information
         :return:
         """
-
         return self._query_helper("time", "get_timezone")
 
     @property
@@ -368,7 +360,7 @@ class SmartPlug:
         :return:
         """
         keys = ["sw_ver", "hw_ver", "mac", "hwId", "fwId", "oemId", "dev_name"]
-        return {key:self.sys_info[key] for key in keys}
+        return {key: self.sys_info[key] for key in keys}
 
     @property
     def on_since(self):
@@ -393,7 +385,6 @@ class SmartPlug:
         Returns WiFi signal strenth (rssi)
         :return: rssi
         """
-
         return self.sys_info["rssi"]
 
     @property
@@ -410,7 +401,6 @@ class SmartPlug:
         Sets new mac address
         :param mac: mac in hexadecimal with colons, e.g. 01:23:45:67:89:ab
         """
-
         return self._query_helper("system", "set_mac_addr", {"mac": mac})
 
 
@@ -446,20 +436,20 @@ class TPLinkSmartHomeProtocol:
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((host, port))
-        _LOGGER.debug("> (%i) %s" % (len(request), request))
+        _LOGGER.debug("> (%i) %s".format(len(request), request))
         sock.send(TPLinkSmartHomeProtocol.encrypt(request))
         buffer = bytes()
         while True:
             chunk = sock.recv(4096)
             buffer += chunk
-            #_LOGGER.debug("Got chunk %s" % len(chunk))
-            if len(chunk) == 0:
+            #_LOGGER.debug("Got chunk %s".format(len(chunk)))
+            if not chunk:
                 break
         sock.shutdown(socket.SHUT_RDWR)
         sock.close()
 
         response = TPLinkSmartHomeProtocol.decrypt(buffer[4:])
-        _LOGGER.debug("< (%i) %s" % (len(response), response))
+        _LOGGER.debug("< (%i) %s".format(len(response), response))
         return json.loads(response)
 
     @staticmethod
