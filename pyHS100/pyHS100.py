@@ -22,11 +22,13 @@ import sys
 
 _LOGGER = logging.getLogger(__name__)
 
+
 class SmartPlugException(Exception):
     """
     SmartPlugException gets raised for errors reported by the plug.
     """
     pass
+
 
 class SmartPlug:
     """Representation of a TP-Link Smart Switch.
@@ -76,7 +78,7 @@ class SmartPlug:
 
         :param target: Target system {system, time, emeter, ..}
         :param cmd: Command to execute
-        :param arg: JSON object passed as parameter to the command, defualts to {}
+        :param arg: JSON object passed as parameter to the command, defaults to {}
         :return: Unwrapped result for the call.
         :rtype: dict
         :raises SmartPlugException: if command was not executed correctly
@@ -225,7 +227,8 @@ class SmartPlug:
         if month is None:
             month = datetime.datetime.now().month
 
-        response = self._query_helper("emeter", "get_daystat", {'month': month, 'year': year})
+        response = self._query_helper("emeter", "get_daystat",
+                                      {'month': month, 'year': year})
 
         return {entry['day']: entry['energy']
                 for entry in response['day_list']}
@@ -243,7 +246,8 @@ class SmartPlug:
         if not self.has_emeter:
             return False
 
-        response = self._query_helper("emeter", "get_monthstat", {'year': year})
+        response = self._query_helper("emeter", "get_monthstat",
+                                      {'year': year})
 
         return {entry['month']: entry['energy']
                 for entry in response['month_list']}
@@ -337,7 +341,9 @@ class SmartPlug:
     def icon(self):
         """
         Returns device icon
-        Note: this doesn't seem to work when not using the cloud service, not tested with it either.
+
+        Note: this doesn't seem to work (at least) when not using the cloud service.
+
         :return: icon and its hash
         :rtype: dict
         :raises SmartPlugException: on error
@@ -365,7 +371,8 @@ class SmartPlug:
         :raises SmartPlugException: on error
         """
         response = self._query_helper("time", "get_time")
-        return datetime.datetime(response["year"], response["month"], response["mday"], response["hour"], response["min"], response["sec"])
+        return datetime.datetime(response["year"], response["month"], response["mday"],
+                                 response["hour"], response["min"], response["sec"])
 
     @time.setter
     def time(self, ts):
@@ -420,7 +427,8 @@ class SmartPlug:
         :return: datetime for on since
         :rtype: datetime
         """
-        return datetime.datetime.now() - datetime.timedelta(seconds=self.sys_info["on_time"])
+        return datetime.datetime.now() - \
+               datetime.timedelta(seconds=self.sys_info["on_time"])
 
     @property
     def location(self):
@@ -430,7 +438,8 @@ class SmartPlug:
         :rtype: dict
         """
 
-        return {"latitude": self.sys_info["latitude"], "longitude": self.sys_info["longitude"]}
+        return {"latitude": self.sys_info["latitude"],
+                "longitude": self.sys_info["longitude"]}
 
     @property
     def rssi(self):
