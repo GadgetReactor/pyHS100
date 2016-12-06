@@ -43,6 +43,9 @@ class SmartPlug:
     # query and print current state of plug
     print(p.state)
 
+    Errors reported by the device are raised as SmartPlugExceptions,
+    and should be handled by the user of the library.
+
     Note:
     The library references the same structure as defined for the D-Link Switch
     """
@@ -67,14 +70,23 @@ class SmartPlug:
         socket.inet_pton(socket.AF_INET, ip_address)
         self.ip_address = ip_address
 
+        self.initialize()
+
+    def initialize(self):
+        """
+        (Re-)Initializes the state.
+
+        This should be called when the state of the plug is changed anyway.
+
+        :raises: SmartPlugException: on error
+        """
         self.sys_info = self.get_sysinfo()
 
         self._alias, self.model, self.features = self.identify()
 
     def _query_helper(self, target, cmd, arg={}):
         """
-        Query helper, returns unwrapped result object.
-        Raises SmartPlugException in case of error reported by the plug.
+        Helper returning unwrapped result object and doing error handling.
 
         :param target: Target system {system, time, emeter, ..}
         :param cmd: Command to execute
@@ -136,6 +148,8 @@ class SmartPlug:
         else:
             raise ValueError("State %s is not valid.", value)
 
+        self.initialize()
+
     def get_sysinfo(self):
         """
         Retrieve system information.
@@ -173,6 +187,8 @@ class SmartPlug:
         """
         self._query_helper("system", "set_relay_state", {"state": 1})
 
+        self.initialize()
+
     def turn_off(self):
         """
         Turn the switch off.
@@ -180,6 +196,8 @@ class SmartPlug:
         :raises SmartPlugException: on error
         """
         self._query_helper("system", "set_relay_state", {"state": 0})
+
+        self.initialize()
 
     @property
     def has_emeter(self):
@@ -203,9 +221,7 @@ class SmartPlug:
         if not self.has_emeter:
             return False
 
-        response = self._query_helper("emeter", "get_realtime")
-
-        return response
+        return self._query_helper("emeter", "get_realtime")
 
     def get_emeter_daily(self, year=None, month=None):
         """
@@ -264,9 +280,12 @@ class SmartPlug:
         if not self.has_emeter:
             return False
 
-        response = self._query_helper("emeter", "erase_emeter_stat", None)
+        self._query_helper("emeter", "erase_emeter_stat", None)
 
-        return response['err_code'] == 0
+        self.initialize()
+
+        # As query_helper raises exception in case of failure, we have succeeded when we are this far.
+        return True
 
     def current_consumption(self):
         """
@@ -305,6 +324,7 @@ class SmartPlug:
     def alias(self):
         """
         Get current device alias (name)
+
         :return: Device name aka alias.
         :rtype: str
         """
@@ -314,15 +334,19 @@ class SmartPlug:
     def alias(self, alias):
         """
         Sets the device name aka alias.
+
         :param alias: New alias (name)
         :raises SmartPlugException: on error
         """
         self._query_helper("system", "set_dev_alias", {"alias": alias})
 
+        self.initialize()
+
     @property
     def led(self):
         """
         Returns the state of the led.
+
         :return: True if led is on, False otherwise
         :rtype: bool
         """
@@ -332,17 +356,20 @@ class SmartPlug:
     def led(self, state):
         """
         Sets the state of the led (night mode)
-        :param int state: 1 to set led on, 0 to set led off
+
+        :param bool state: True to set led on, False to set led off
         :raises SmartPlugException: on error
         """
-        self._query_helper("system", "set_led_off", {"off": 1 - state})
+        self._query_helper("system", "set_led_off", {"off": int(not state)})
+
+        self.initialize()
 
     @property
     def icon(self):
         """
         Returns device icon
 
-        Note: this doesn't seem to work (at least) when not using the cloud service.
+        Note: not working on HS110, but is always empty.
 
         :return: icon and its hash
         :rtype: dict
@@ -354,6 +381,7 @@ class SmartPlug:
     def icon(self, icon):
         """
         Content for hash and icon are unknown.
+
         :param str icon: Icon path(?)
         :raises NotImplementedError: when not implemented
         :raises SmartPlugError: on error
@@ -361,31 +389,34 @@ class SmartPlug:
         raise NotImplementedError("Values for this call are unknown at this point.")
         # here just for the sake of completeness
         # self._query_helper("system", "set_dev_icon", {"icon": "", "hash": ""})
+        # self.initialize()
 
     @property
     def time(self):
         """
         Returns current time from the device.
+
         :return: datetime for device's time
         :rtype: datetime.datetime
         :raises SmartPlugException: on error
         """
-        response = self._query_helper("time", "get_time")
-        return datetime.datetime(response["year"], response["month"], response["mday"],
-                                 response["hour"], response["min"], response["sec"])
+        res = self._query_helper("time", "get_time")
+        return datetime.datetime(res["year"], res["month"], res["mday"],
+                                 res["hour"], res["min"], res["sec"])
 
     @time.setter
     def time(self, ts):
         """
         Sets time based on datetime object.
-        Note, this calls set_timezone
+        Note: this calls set_timezone() for setting.
+
         :param datetime.datetime ts: New date and time
         :return: result
         :type: dict
         :raises NotImplemented: when not implemented.
         :raises SmartPlugException: on error
         """
-        raise NotImplementedError("Setting time does not seem to work on HS110 although it returns no error.")
+        raise NotImplementedError("Fails with err_code == 0 with HS110.")
         """ here just for the sake of completeness / if someone figures out why it doesn't work.
         ts_obj = {
             "index": self.timezone["index"],
@@ -397,13 +428,18 @@ class SmartPlug:
             "mday": ts.day,
         }
 
-        return self._query_helper("time", "set_timezone", ts_obj)
+
+        response = self._query_helper("time", "set_timezone", ts_obj)
+        self.initialize()
+
+        return response
         """
 
     @property
     def timezone(self):
         """
         Returns timezone information
+
         :return: Timezone information
         :rtype: dict
         :raises SmartPlugException: on error
@@ -414,6 +450,7 @@ class SmartPlug:
     def hw_info(self):
         """
         Returns information about hardware
+
         :return: Information about hardware
         :rtype: dict
         """
@@ -424,6 +461,7 @@ class SmartPlug:
     def on_since(self):
         """
         Returns pretty-printed on-time
+
         :return: datetime for on since
         :rtype: datetime
         """
@@ -434,6 +472,7 @@ class SmartPlug:
     def location(self):
         """
         Location of the device, as read from sysinfo
+
         :return: latitude and longitude
         :rtype: dict
         """
@@ -445,6 +484,7 @@ class SmartPlug:
     def rssi(self):
         """
         Returns WiFi signal strenth (rssi)
+
         :return: rssi
         :rtype: int
         """
@@ -454,6 +494,7 @@ class SmartPlug:
     def mac(self):
         """
         Returns mac address
+
         :return: mac address in hexadecimal with colons, e.g. 01:23:45:67:89:ab
         :rtype: str
         """
@@ -463,10 +504,14 @@ class SmartPlug:
     def mac(self, mac):
         """
         Sets new mac address
+
         :param str mac: mac in hexadecimal with colons, e.g. 01:23:45:67:89:ab
         :raises SmartPlugException: on error
         """
-        return self._query_helper("system", "set_mac_addr", {"mac": mac})
+        self._query_helper("system", "set_mac_addr", {"mac": mac})
+
+        self.initialize()
+
 
 
 class TPLinkSmartHomeProtocol:
@@ -501,20 +546,23 @@ class TPLinkSmartHomeProtocol:
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((host, port))
+
         _LOGGER.debug("> (%i) %s", len(request), request)
         sock.send(TPLinkSmartHomeProtocol.encrypt(request))
+
         buffer = bytes()
         while True:
             chunk = sock.recv(4096)
             buffer += chunk
-            #_LOGGER.debug("Got chunk %s".format(len(chunk)))
             if not chunk:
                 break
+
         sock.shutdown(socket.SHUT_RDWR)
         sock.close()
 
         response = TPLinkSmartHomeProtocol.decrypt(buffer[4:])
         _LOGGER.debug("< (%i) %s", len(response), response)
+
         return json.loads(response)
 
     @staticmethod
