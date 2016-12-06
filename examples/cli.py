@@ -11,12 +11,12 @@ if len(sys.argv) < 2:
 
 hs = SmartPlug(sys.argv[1])
 
-logging.info("Identify: %s".format(hs.identify))
-logging.info("Sysinfo: %s".format(hs.get_sysinfo()))
+logging.info("Identify: %s", hs.identify)
+logging.info("Sysinfo: %s", hs.get_sysinfo())
 has_emeter = hs.has_emeter
 if has_emeter:
     logging.info("== Emeter ==")
-    logging.info("- Current: %s".format(hs.get_emeter_realtime()))
+    logging.info("- Current: %s", hs.get_emeter_realtime())
     logging.info("== Monthly ==")
     logging.info(hs.get_emeter_monthly())
     logging.info("== Daily ==")

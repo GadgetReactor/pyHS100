@@ -35,8 +35,8 @@ plug.turn_on()
 ```
 or
 ```python
-plug.state = False
-plug.state = True
+plug.state = "ON"
+plug.state = "OFF"
 ```
 
 ## Getting emeter status (on HS110)

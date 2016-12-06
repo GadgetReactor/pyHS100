@@ -23,6 +23,9 @@ import sys
 _LOGGER = logging.getLogger(__name__)
 
 class SmartPlugException(Exception):
+    """
+    SmartPlugException gets raised for errors reported by the plug.
+    """
     pass
 
 class SmartPlug:
@@ -33,8 +36,8 @@ class SmartPlug:
     # print the devices alias
     print(p.alias)
     # change state of plug
-    p.state = False
-    p.state = True
+    p.state = "ON"
+    p.state = "OFF"
     # query and print current state of plug
     print(p.state)
 
@@ -56,7 +59,8 @@ class SmartPlug:
         """
         Create a new SmartPlug instance, identified through its IP address.
 
-        :param ip_address: ip address on which the device listens
+        :param str ip_address: ip address on which the device listens
+        :raises SmartPlugException: when unable to communicate with the device
         """
         socket.inet_pton(socket.AF_INET, ip_address)
         self.ip_address = ip_address
@@ -67,22 +71,26 @@ class SmartPlug:
 
     def _query_helper(self, target, cmd, arg={}):
         """
-        Query helper, raises SmartPlugException in case of failure, otherwise returns unwrapped result object
+        Query helper, returns unwrapped result object.
+        Raises SmartPlugException in case of error reported by the plug.
 
         :param target: Target system {system, time, emeter, ..}
-        :param cmd:
+        :param cmd: Command to execute
         :param arg: JSON object passed as parameter to the command, defualts to {}
         :return: Unwrapped result for the call.
-        :raises SmartPlugException if command was not executed correctly
+        :rtype: dict
+        :raises SmartPlugException: if command was not executed correctly
         """
         response = TPLinkSmartHomeProtocol.query(
             host=self.ip_address,
-            request={target: { cmd: arg }}
+            request={target: {cmd: arg}}
         )
 
         result = response[target][cmd]
         if result["err_code"] != 0:
-            raise SmartPlugException("Error on %s.%s: %s".format(target, cmd, result))
+            raise SmartPlugException("Error on {}.{}: {}".format(target, cmd, result))
+
+        del result["err_code"]
 
         return result
 
@@ -92,9 +100,10 @@ class SmartPlug:
         Retrieve the switch state
 
         :returns: one of
-                  True
-                  False
+                  SWITCH_STATE_ON
+                  SWITCH_STATE_OFF
                   SWITCH_STATE_UNKNOWN
+        :rtype: str
         """
         relay_state = self.sys_info['relay_state']
 
@@ -112,10 +121,11 @@ class SmartPlug:
         Set the new switch state
 
         :param value: one of
-                    True
-                    False
-        :return: True if new state was successfully set
-                 False if an error occured
+                    SWITCH_STATE_ON
+                    SWITCH_STATE_OFF
+        :raises ValueError: on invalid state
+        :raises SmartPlugException: on error
+
         """
         if value.upper() == SmartPlug.SWITCH_STATE_ON:
             self.turn_on()
@@ -128,25 +138,46 @@ class SmartPlug:
         """
         Retrieve system information.
 
-        :return: dict sysinfo
+        :return: sysinfo
+        :rtype dict
+        :raises SmartPlugException: on error
         """
         return self._query_helper("system", "get_sysinfo")
+
+    @property
+    def is_on(self):
+        """
+        Returns whether device is on.
+
+        :return: True if device is on, False otherwise
+        """
+        return bool(self.sys_info['relay_state'])
+
+    @property
+    def is_off(self):
+        """
+        Returns whether device is off.
+
+        :return: True if device is off, False otherwise.
+         :rtype: bool
+        """
+        return not self.is_on
 
     def turn_on(self):
         """
         Turn the switch on.
 
-        :return:
+        :raises SmartPlugException: on error
         """
-        self.state = True
+        self._query_helper("system", "set_relay_state", {"state": 1})
 
     def turn_off(self):
         """
         Turn the switch off.
 
-        :return:
+        :raises SmartPlugException: on error
         """
-        self.state = False
+        self._query_helper("system", "set_relay_state", {"state": 0})
 
     @property
     def has_emeter(self):
@@ -162,15 +193,15 @@ class SmartPlug:
         """
         Retrive current energy readings from device.
 
-        :returns: dict with current readings
+        :returns: current readings or False
+        :rtype: dict, False
                   False if device has no energy meter or error occured
+        :raises SmartPlugException: on error
         """
         if not self.has_emeter:
             return False
 
         response = self._query_helper("emeter", "get_realtime")
-
-        del response['err_code']
 
         return response
 
@@ -181,8 +212,10 @@ class SmartPlug:
         :param year: year for which to retrieve statistics (default: this year)
         :param month: month for which to retrieve statistcs (default: this
                       month)
-        :return: dict: mapping of day of month to value
+        :return: mapping of day of month to value
                  False if device has no energy meter or error occured
+        :rtype: dict
+        :raises SmartPlugException: on error
         """
         if not self.has_emeter:
             return False
@@ -203,7 +236,9 @@ class SmartPlug:
 
         :param year: year for which to retrieve statistics (default: this year)
         :return: dict: mapping of month to value
-                 False if device has no energy meter or error occured
+                 False if device has no energy meter
+        :rtype: dict
+        :raises SmartPlugException: on error
         """
         if not self.has_emeter:
             return False
@@ -218,7 +253,9 @@ class SmartPlug:
         Erase energy meter statistics
 
         :return: True if statistics were deleted
-                 False if device has no energy meter or error occured
+                 False if device has no energy meter.
+        :rtype: bool
+        :raises SmartPlugException: on error
         """
         if not self.has_emeter:
             return False
@@ -232,7 +269,8 @@ class SmartPlug:
         Get the current power consumption in Watt.
 
         :return: the current power consumption in Watt.
-                 False if device has no energy meter of error occured.
+                 False if device has no energy meter.
+        :raises SmartPlugException: on error
         """
         if not self.has_emeter:
             return False
@@ -245,7 +283,8 @@ class SmartPlug:
         """
         Query device information to identify model and featureset
 
-        :return: str model, list of supported features
+        :return: (alias, model, list of supported features)
+        :rtype: tuple
         """
         alias = self.sys_info['alias']
         model = self.sys_info['model']
@@ -262,7 +301,8 @@ class SmartPlug:
     def alias(self):
         """
         Get current device alias (name)
-        :return:
+        :return: Device name aka alias.
+        :rtype: str
         """
         return self._alias
 
@@ -271,6 +311,7 @@ class SmartPlug:
         """
         Sets the device name aka alias.
         :param alias: New alias (name)
+        :raises SmartPlugException: on error
         """
         self._query_helper("system", "set_dev_alias", {"alias": alias})
 
@@ -278,7 +319,8 @@ class SmartPlug:
     def led(self):
         """
         Returns the state of the led.
-        :return:
+        :return: True if led is on, False otherwise
+        :rtype: bool
         """
         return bool(1 - self.sys_info["led_off"])
 
@@ -286,7 +328,8 @@ class SmartPlug:
     def led(self, state):
         """
         Sets the state of the led (night mode)
-        :param state: 1 to set led on, 0 to set led off
+        :param int state: 1 to set led on, 0 to set led off
+        :raises SmartPlugException: on error
         """
         self._query_helper("system", "set_led_off", {"off": 1 - state})
 
@@ -295,7 +338,9 @@ class SmartPlug:
         """
         Returns device icon
         Note: this doesn't seem to work when not using the cloud service, not tested with it either.
-        :return:
+        :return: icon and its hash
+        :rtype: dict
+        :raises SmartPlugException: on error
         """
         return self._query_helper("system", "get_dev_icon")
 
@@ -303,9 +348,11 @@ class SmartPlug:
     def icon(self, icon):
         """
         Content for hash and icon are unknown.
-        :param icon:
+        :param str icon: Icon path(?)
+        :raises NotImplementedError: when not implemented
+        :raises SmartPlugError: on error
         """
-        raise NotImplementedError()
+        raise NotImplementedError("Values for this call are unknown at this point.")
         # here just for the sake of completeness
         # self._query_helper("system", "set_dev_icon", {"icon": "", "hash": ""})
 
@@ -314,6 +361,8 @@ class SmartPlug:
         """
         Returns current time from the device.
         :return: datetime for device's time
+        :rtype: datetime.datetime
+        :raises SmartPlugException: on error
         """
         response = self._query_helper("time", "get_time")
         return datetime.datetime(response["year"], response["month"], response["mday"], response["hour"], response["min"], response["sec"])
@@ -323,10 +372,13 @@ class SmartPlug:
         """
         Sets time based on datetime object.
         Note, this calls set_timezone
-        :param ts: New timestamp
-        :return:
+        :param datetime.datetime ts: New date and time
+        :return: result
+        :type: dict
+        :raises NotImplemented: when not implemented.
+        :raises SmartPlugException: on error
         """
-        raise NotImplemented("Setting time does not seem to work on HS110 although it returns no error.")
+        raise NotImplementedError("Setting time does not seem to work on HS110 although it returns no error.")
         """ here just for the sake of completeness / if someone figures out why it doesn't work.
         ts_obj = {
             "index": self.timezone["index"],
@@ -345,7 +397,9 @@ class SmartPlug:
     def timezone(self):
         """
         Returns timezone information
-        :return:
+        :return: Timezone information
+        :rtype: dict
+        :raises SmartPlugException: on error
         """
         return self._query_helper("time", "get_timezone")
 
@@ -353,7 +407,8 @@ class SmartPlug:
     def hw_info(self):
         """
         Returns information about hardware
-        :return:
+        :return: Information about hardware
+        :rtype: dict
         """
         keys = ["sw_ver", "hw_ver", "mac", "hwId", "fwId", "oemId", "dev_name"]
         return {key: self.sys_info[key] for key in keys}
@@ -362,7 +417,8 @@ class SmartPlug:
     def on_since(self):
         """
         Returns pretty-printed on-time
-        :return:
+        :return: datetime for on since
+        :rtype: datetime
         """
         return datetime.datetime.now() - datetime.timedelta(seconds=self.sys_info["on_time"])
 
@@ -370,7 +426,8 @@ class SmartPlug:
     def location(self):
         """
         Location of the device, as read from sysinfo
-        :return:
+        :return: latitude and longitude
+        :rtype: dict
         """
 
         return {"latitude": self.sys_info["latitude"], "longitude": self.sys_info["longitude"]}
@@ -380,6 +437,7 @@ class SmartPlug:
         """
         Returns WiFi signal strenth (rssi)
         :return: rssi
+        :rtype: int
         """
         return self.sys_info["rssi"]
 
@@ -387,7 +445,8 @@ class SmartPlug:
     def mac(self):
         """
         Returns mac address
-        :return:
+        :return: mac address in hexadecimal with colons, e.g. 01:23:45:67:89:ab
+        :rtype: str
         """
         return self.sys_info["mac"]
 
@@ -395,7 +454,8 @@ class SmartPlug:
     def mac(self, mac):
         """
         Sets new mac address
-        :param mac: mac in hexadecimal with colons, e.g. 01:23:45:67:89:ab
+        :param str mac: mac in hexadecimal with colons, e.g. 01:23:45:67:89:ab
+        :raises SmartPlugException: on error
         """
         return self._query_helper("system", "set_mac_addr", {"mac": mac})
 
@@ -421,8 +481,8 @@ class TPLinkSmartHomeProtocol:
         Request information from a TP-Link SmartHome Device and return the
         response.
 
-        :param host: ip address of the device
-        :param port: port on the device (default: 9999)
+        :param str host: ip address of the device
+        :param int port: port on the device (default: 9999)
         :param request: command to send to the device (can be either dict or
         json string)
         :return:
@@ -432,7 +492,7 @@ class TPLinkSmartHomeProtocol:
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((host, port))
-        _LOGGER.debug("> (%i) %s".format(len(request), request))
+        _LOGGER.debug("> (%i) %s", len(request), request)
         sock.send(TPLinkSmartHomeProtocol.encrypt(request))
         buffer = bytes()
         while True:
@@ -445,7 +505,7 @@ class TPLinkSmartHomeProtocol:
         sock.close()
 
         response = TPLinkSmartHomeProtocol.decrypt(buffer[4:])
-        _LOGGER.debug("< (%i) %s".format(len(response), response))
+        _LOGGER.debug("< (%i) %s", len(response), response)
         return json.loads(response)
 
     @staticmethod
