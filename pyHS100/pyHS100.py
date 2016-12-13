@@ -75,9 +75,9 @@ class SmartPlug:
         self.protocol = protocol
         self._sys_info = None
 
-    def _initialize(self):
+    def _fetch_sysinfo(self):
         """
-        (Re-)Initializes the state.
+        Fetches the system information from the device.
 
         This should be called when the state of the plug is changed.
 
@@ -117,7 +117,7 @@ class SmartPlug:
     @property
     def sys_info(self):
         if not self._sys_info:
-            self._initialize()
+            self._fetch_sysinfo()
 
         return self._sys_info
 
@@ -163,7 +163,7 @@ class SmartPlug:
         else:
             raise ValueError("State %s is not valid.", value)
 
-        self._initialize()
+        self._fetch_sysinfo()
 
     def get_sysinfo(self):
         """
@@ -202,7 +202,7 @@ class SmartPlug:
         """
         self._query_helper("system", "set_relay_state", {"state": 1})
 
-        self._initialize()
+        self._fetch_sysinfo()
 
     def turn_off(self):
         """
@@ -212,7 +212,7 @@ class SmartPlug:
         """
         self._query_helper("system", "set_relay_state", {"state": 0})
 
-        self._initialize()
+        self._fetch_sysinfo()
 
     @property
     def has_emeter(self):
@@ -297,7 +297,7 @@ class SmartPlug:
 
         self._query_helper("emeter", "erase_emeter_stat", None)
 
-        self._initialize()
+        self._fetch_sysinfo()
 
         # As query_helper raises exception in case of failure, we have succeeded when we are this far.
         return True
@@ -374,7 +374,7 @@ class SmartPlug:
         """
         self._query_helper("system", "set_dev_alias", {"alias": alias})
 
-        self._initialize()
+        self._fetch_sysinfo()
 
     @property
     def led(self):
@@ -396,7 +396,7 @@ class SmartPlug:
         """
         self._query_helper("system", "set_led_off", {"off": int(not state)})
 
-        self._initialize()
+        self._fetch_sysinfo()
 
     @property
     def icon(self):
@@ -544,7 +544,7 @@ class SmartPlug:
         """
         self._query_helper("system", "set_mac_addr", {"mac": mac})
 
-        self._initialize()
+        self._fetch_sysinfo()
 
 
 
