@@ -3,10 +3,10 @@ from __future__ import unicode_literals
 
 import json
 import socket
-import sys
 import logging
 
 _LOGGER = logging.getLogger(__name__)
+
 
 class TPLinkSmartHomeProtocol:
     """
@@ -68,7 +68,6 @@ class TPLinkSmartHomeProtocol:
         :return: ciphertext request
         """
         key = TPLinkSmartHomeProtocol.initialization_vector
-        #buffer = ['\0\0\0\0']
         buffer = bytearray(4)  # 4 nullbytes
 
         for char in request:
@@ -77,11 +76,6 @@ class TPLinkSmartHomeProtocol:
             buffer.append(cipher)
 
         return buffer
-        ciphertext = ''.join(buffer)
-        if sys.version_info.major > 2:
-            ciphertext = ciphertext.encode('latin-1')
-
-        return ciphertext
 
     @staticmethod
     def decrypt(ciphertext):
@@ -102,6 +96,5 @@ class TPLinkSmartHomeProtocol:
             buffer.append(chr(plain))
 
         plaintext = ''.join(buffer)
-        print(type(plaintext))
 
         return plaintext

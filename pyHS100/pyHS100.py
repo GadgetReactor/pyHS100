@@ -155,7 +155,7 @@ class SmartPlug:
 
         """
         if not isinstance(value, str):
-            raise ValueError("State must be of type str, not of %s.", type(value))
+            raise ValueError("State must be str, not of %s.", type(value))
         elif value.upper() == SmartPlug.SWITCH_STATE_ON:
             self.turn_on()
         elif value.upper() == SmartPlug.SWITCH_STATE_OFF:

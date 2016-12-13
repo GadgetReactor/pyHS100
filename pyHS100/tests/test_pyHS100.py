@@ -9,14 +9,14 @@ import re
 
 from pyHS100 import SmartPlug, SmartPlugException
 
-PLUG_IP='192.168.250.186'
-SKIP_STATE_TESTS=True
+PLUG_IP = '192.168.250.186'
+SKIP_STATE_TESTS = True
 
 # python2 compatibility
 try:
-  basestring
+    basestring
 except NameError:
-  basestring = str
+    basestring = str
 
 
 def check_int_bool(x):
@@ -40,27 +40,27 @@ def check_mode(x):
 
 class TestSmartPlug(TestCase):
     sysinfo_schema = Schema({
-                       'active_mode': check_mode,
-                       'alias': basestring,
-                       'dev_name': basestring,
-                       'deviceId': basestring,
-                       'feature': basestring,
-                       'fwId': basestring,
-                       'hwId': basestring,
-                       'hw_ver': basestring,
-                       'icon_hash': basestring,
-                       'latitude': All(float, Range(min=-90, max=90)),
-                       'led_off': check_int_bool,
-                       'longitude': All(float, Range(min=-180, max=180)),
-                       'mac': check_mac,
-                       'model': basestring,
-                       'oemId': basestring,
-                       'on_time': int,
-                       'relay_state': int,
-                       'rssi': All(int, Range(max=0)),
-                       'sw_ver': basestring,
-                       'type': basestring,
-                       'updating': check_int_bool,
+        'active_mode': check_mode,
+        'alias': basestring,
+        'dev_name': basestring,
+        'deviceId': basestring,
+        'feature': basestring,
+        'fwId': basestring,
+        'hwId': basestring,
+        'hw_ver': basestring,
+        'icon_hash': basestring,
+        'latitude': All(float, Range(min=-90, max=90)),
+        'led_off': check_int_bool,
+        'longitude': All(float, Range(min=-180, max=180)),
+        'mac': check_mac,
+        'model': basestring,
+        'oemId': basestring,
+        'on_time': int,
+        'relay_state': int,
+        'rssi': All(int, Range(max=0)),
+        'sw_ver': basestring,
+        'type': basestring,
+        'updating': check_int_bool,
     })
 
     current_consumption_schema = Schema({
@@ -89,15 +89,15 @@ class TestSmartPlug(TestCase):
 
     def test_initialize_invalid_connection(self):
         plug = SmartPlug('127.0.0.1')
-        with self.assertRaises(SmartPlugException) as raises:
+        with self.assertRaises(SmartPlugException):
             plug.sys_info['model']
 
     def test_query_helper(self):
-        with self.assertRaises(SmartPlugException) as raises:
+        with self.assertRaises(SmartPlugException):
             self.plug._query_helper("test", "testcmd", {})
         # TODO check for unwrapping?
 
-    @skipIf(SKIP_STATE_TESTS, "state tests disabled, to enable set SKIP_STATE_TESTS to False")
+    @skipIf(SKIP_STATE_TESTS, "SKIP_STATE_TESTS is True, skipping")
     def test_state(self):
         def set_invalid(x):
             self.plug.state = x
@@ -126,9 +126,10 @@ class TestSmartPlug(TestCase):
             self.fail("can't test for unknown state")
 
     def test_get_sysinfo(self):
-        self.sysinfo_schema(self.plug.get_sysinfo())  # initialize checks for this already, but just to be sure
+        # initialize checks for this already, but just to be sure
+        self.sysinfo_schema(self.plug.get_sysinfo())
 
-    @skipIf(SKIP_STATE_TESTS, "state tests disabled, to enable set SKIP_STATE_TESTS to False")
+    @skipIf(SKIP_STATE_TESTS, "SKIP_STATE_TESTS is True, skipping")
     def test_turns_and_isses(self):
         orig_state = self.plug.is_on
 
@@ -146,7 +147,8 @@ class TestSmartPlug(TestCase):
             self.assertTrue(self.plug.is_off)
 
     def test_has_emeter(self):
-        if "110" in self.plug.sys_info["model"]:  # not so nice way for checking for proper models..
+        # a not so nice way for checking for emeter availability..
+        if "110" in self.plug.sys_info["model"]:
             self.assertTrue(self.plug.has_emeter)
         else:
             self.assertFalse(self.plug.has_emeter)
@@ -160,7 +162,6 @@ class TestSmartPlug(TestCase):
         k, v = self.plug.get_emeter_daily().popitem()
         self.assertTrue(isinstance(k, int))
         self.assertTrue(isinstance(v, float))
-
 
     def test_get_emeter_monthly(self):
         self.assertEqual(self.plug.get_emeter_monthly(year=1900), {})
@@ -179,12 +180,10 @@ class TestSmartPlug(TestCase):
         self.assertTrue(isinstance(x, float))
         self.assertTrue(x >= 0.0)
 
-
     def test_identify(self):
         ident = self.plug.identify()
         self.assertTrue(isinstance(ident, tuple))
         self.assertTrue(len(ident) == 3)
-
 
     def test_alias(self):
         test_alias = "TEST1234"
@@ -222,7 +221,6 @@ class TestSmartPlug(TestCase):
         self.assertTrue(isinstance(self.plug.on_since, datetime.datetime))
 
     def test_location(self):
-        #x = {k: self.sysinfo_schema.schema[k] for k in self.sysinfo_schema.schema if k in ['latitude', 'longitude']}
         self.sysinfo_schema(self.plug.location)
 
     def test_rssi(self):
