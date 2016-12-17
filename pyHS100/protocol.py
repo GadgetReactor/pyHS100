@@ -24,7 +24,7 @@ class TPLinkSmartHomeProtocol:
     initialization_vector = 171
 
     @staticmethod
-    def query(host, request, port=9999):
+    def query(host, request, port=9999, socket_type=socket.SOCK_STREAM):
         """
         Request information from a TP-Link SmartHome Device and return the
         response.
@@ -38,11 +38,19 @@ class TPLinkSmartHomeProtocol:
         if isinstance(request, dict):
             request = json.dumps(request)
 
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((host, port))
+        encrypted_req = TPLinkSmartHomeProtocol.encrypt(request)
+
+        sock = socket.socket(socket.AF_INET, socket_type)
+
+        if socket_type == socket.SOCK_STREAM:
+            sock.connect((host, port))
+            sock.send(encrypted_req)
+        elif socket_type == socket.SOCK_DGRAM:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            sock.sendto(encrypted_req[4:], (host, port))
 
         _LOGGER.debug("> (%i) %s", len(request), request)
-        sock.send(TPLinkSmartHomeProtocol.encrypt(request))
 
         buffer = bytes()
         while True:
@@ -58,6 +66,14 @@ class TPLinkSmartHomeProtocol:
         _LOGGER.debug("< (%i) %s", len(response), response)
 
         return json.loads(response)
+
+    @staticmethod
+    def discover():
+        disc_query = {"system": {"get_sysinfo": None}, "emeter": {"get_realtime": None}}
+        bcast = "255.255.255.255"
+        for res in  TPLinkSmartHomeProtocol.query(bcast, json.dumps(disc_query), socket_type=socket.SOCK_DGRAM):
+            yield res
+
 
     @staticmethod
     def encrypt(request):
