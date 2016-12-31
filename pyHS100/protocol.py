@@ -51,8 +51,11 @@ class TPLinkSmartHomeProtocol:
             if not chunk:
                 break
 
-        sock.shutdown(socket.SHUT_RDWR)
-        sock.close()
+        try:
+            sock.shutdown(socket.SHUT_RDWR)
+            sock.close()
+        except:
+            pass
 
         response = TPLinkSmartHomeProtocol.decrypt(buffer[4:])
         _LOGGER.debug("< (%i) %s", len(response), response)
