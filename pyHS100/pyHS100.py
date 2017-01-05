@@ -14,8 +14,13 @@ You may obtain a copy of the license at
 http://www.apache.org/licenses/LICENSE-2.0
 """
 
+# python2 compatibility
 from __future__ import absolute_import
 from __future__ import unicode_literals
+try:
+    basestring
+except NameError:
+    basestring = str
 
 import datetime
 import logging
@@ -33,7 +38,7 @@ class SmartPlugException(Exception):
     pass
 
 
-class SmartPlug:
+class SmartPlug(object):
     """Representation of a TP-Link Smart Switch.
 
     Usage example when used as library:
@@ -159,7 +164,7 @@ class SmartPlug:
         :raises SmartPlugException: on error
 
         """
-        if not isinstance(value, str):
+        if not isinstance(value, basestring):
             raise ValueError("State must be str, not of %s.", type(value))
         elif value.upper() == SmartPlug.SWITCH_STATE_ON:
             self.turn_on()
