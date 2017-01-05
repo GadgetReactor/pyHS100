@@ -7,6 +7,7 @@ import logging
 
 _LOGGER = logging.getLogger(__name__)
 
+
 class TPLinkSmartHomeProtocol:
     """
     Implementation of the TP-Link Smart Home Protocol
@@ -22,6 +23,7 @@ class TPLinkSmartHomeProtocol:
     """
     INITIALIZATION_VECTOR = 171
     DEFAULT_PORT = 9999
+    DEFAULT_TIMEOUT = 5
 
     @staticmethod
     def query(host, request, port=DEFAULT_PORT):
@@ -40,7 +42,6 @@ class TPLinkSmartHomeProtocol:
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((host, port))
-
 
         _LOGGER.debug("> (%i) %s", len(request), request)
         sock.send(TPLinkSmartHomeProtocol.encrypt(request))
@@ -61,8 +62,19 @@ class TPLinkSmartHomeProtocol:
         return json.loads(response)
 
     @staticmethod
-    def discover(timeout=5, port=DEFAULT_PORT):
-        discovery_query = {"system": {"get_sysinfo": None}, "emeter": {"get_realtime": None}}
+    def discover(timeout=DEFAULT_TIMEOUT, port=DEFAULT_PORT):
+        """
+        Sends discovery message to 255.255.255.255:9999 in order
+        to detect available supported devices in the local network,
+        and waits for given timeout for answers from devices.
+
+        :param timeout: How long to wait for responses, defaults to 5
+        :param port: port to send broadcast messages, defaults to 9999.
+        :rtype: list[dict]
+        :return: Array of json objects {"ip", "port", "sys_info"}
+        """
+        discovery_query = {"system": {"get_sysinfo": None},
+                           "emeter": {"get_realtime": None}}
         target = "255.255.255.255"
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -71,7 +83,7 @@ class TPLinkSmartHomeProtocol:
         sock.settimeout(timeout)
 
         req = json.dumps(discovery_query)
-        _LOGGER.debug("Sending discovery to %s:%s - req: %s", target, port, req)
+        _LOGGER.debug("Sending discovery to %s:%s", target, port)
 
         encrypted_req = TPLinkSmartHomeProtocol.encrypt(req)
         sock.sendto(encrypted_req[4:], (target, port))
@@ -90,7 +102,6 @@ class TPLinkSmartHomeProtocol:
             _LOGGER.error("Got exception %s", ex, exc_info=True)
 
         return devices
-
 
     @staticmethod
     def encrypt(request):
