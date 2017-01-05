@@ -7,7 +7,6 @@ import logging
 
 _LOGGER = logging.getLogger(__name__)
 
-
 class TPLinkSmartHomeProtocol:
     """
     Implementation of the TP-Link Smart Home Protocol
@@ -21,10 +20,11 @@ class TPLinkSmartHomeProtocol:
     which are licensed under the Apache License, Version 2.0
     http://www.apache.org/licenses/LICENSE-2.0
     """
-    initialization_vector = 171
+    INITIALIZATION_VECTOR = 171
+    DEFAULT_PORT = 9999
 
     @staticmethod
-    def query(host, request, port=9999, socket_type=socket.SOCK_STREAM):
+    def query(host, request, port=DEFAULT_PORT):
         """
         Request information from a TP-Link SmartHome Device and return the
         response.
@@ -38,19 +38,12 @@ class TPLinkSmartHomeProtocol:
         if isinstance(request, dict):
             request = json.dumps(request)
 
-        encrypted_req = TPLinkSmartHomeProtocol.encrypt(request)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((host, port))
 
-        sock = socket.socket(socket.AF_INET, socket_type)
-
-        if socket_type == socket.SOCK_STREAM:
-            sock.connect((host, port))
-            sock.send(encrypted_req)
-        elif socket_type == socket.SOCK_DGRAM:
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            sock.sendto(encrypted_req[4:], (host, port))
 
         _LOGGER.debug("> (%i) %s", len(request), request)
+        sock.send(TPLinkSmartHomeProtocol.encrypt(request))
 
         buffer = bytes()
         while True:
@@ -68,11 +61,35 @@ class TPLinkSmartHomeProtocol:
         return json.loads(response)
 
     @staticmethod
-    def discover():
-        disc_query = {"system": {"get_sysinfo": None}, "emeter": {"get_realtime": None}}
-        bcast = "255.255.255.255"
-        for res in  TPLinkSmartHomeProtocol.query(bcast, json.dumps(disc_query), socket_type=socket.SOCK_DGRAM):
-            yield res
+    def discover(timeout=5, port=DEFAULT_PORT):
+        discovery_query = {"system": {"get_sysinfo": None}, "emeter": {"get_realtime": None}}
+        target = "255.255.255.255"
+
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.settimeout(timeout)
+
+        req = json.dumps(discovery_query)
+        _LOGGER.debug("Sending discovery to %s:%s - req: %s", target, port, req)
+
+        encrypted_req = TPLinkSmartHomeProtocol.encrypt(req)
+        sock.sendto(encrypted_req[4:], (target, port))
+
+        devices = []
+        _LOGGER.debug("Waiting %s seconds for responses...", timeout)
+
+        try:
+            while True:
+                data, addr = sock.recvfrom(4096)
+                ip, port = addr
+                info = json.loads(TPLinkSmartHomeProtocol.decrypt(data))
+
+                devices.append({"ip": ip, "port": port, "sys_info": info})
+        except Exception as ex:
+            _LOGGER.error("Got exception %s", ex, exc_info=True)
+
+        return devices
 
 
     @staticmethod
@@ -83,7 +100,7 @@ class TPLinkSmartHomeProtocol:
         :param request: plaintext request data
         :return: ciphertext request
         """
-        key = TPLinkSmartHomeProtocol.initialization_vector
+        key = TPLinkSmartHomeProtocol.INITIALIZATION_VECTOR
         buffer = bytearray(4)  # 4 nullbytes
 
         for char in request:
@@ -101,7 +118,7 @@ class TPLinkSmartHomeProtocol:
         :param ciphertext: encrypted response data
         :return: plaintext response
         """
-        key = TPLinkSmartHomeProtocol.initialization_vector
+        key = TPLinkSmartHomeProtocol.INITIALIZATION_VECTOR
         buffer = []
 
         ciphertext = ciphertext.decode('latin-1')
