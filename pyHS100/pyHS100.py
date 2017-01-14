@@ -38,39 +38,10 @@ class SmartPlugException(Exception):
     pass
 
 
-class SmartPlug(object):
-    """Representation of a TP-Link Smart Switch.
-
-    Usage example when used as library:
-    p = SmartPlug("192.168.1.105")
-    # print the devices alias
-    print(p.alias)
-    # change state of plug
-    p.state = "ON"
-    p.state = "OFF"
-    # query and print current state of plug
-    print(p.state)
-
-    Errors reported by the device are raised as SmartPlugExceptions,
-    and should be handled by the user of the library.
-
-    Note:
-    The library references the same structure as defined for the D-Link Switch
-    """
-    # switch states
-    SWITCH_STATE_ON = 'ON'
-    SWITCH_STATE_OFF = 'OFF'
-    SWITCH_STATE_UNKNOWN = 'UNKNOWN'
-
-    # possible device features
-    FEATURE_ENERGY_METER = 'ENE'
-    FEATURE_TIMER = 'TIM'
-
-    ALL_FEATURES = (FEATURE_ENERGY_METER, FEATURE_TIMER)
-
+class SmartDevice(object):
     def __init__(self, ip_address, protocol=None):
         """
-        Create a new SmartPlug instance, identified through its IP address.
+        Create a new SmartDevice instance, identified through its IP address.
 
         :param str ip_address: ip address on which the device listens
         :raises SmartPlugException: when unable to communicate with the device
@@ -118,6 +89,231 @@ class SmartPlug(object):
         #  TODO use volyptuous
         return self.get_sysinfo()
 
+    def get_sysinfo(self):
+        """
+        Retrieve system information.
+
+        :return: sysinfo
+        :rtype dict
+        :raises SmartPlugException: on error
+        """
+        return self._query_helper("system", "get_sysinfo")
+
+    def identify(self):
+        """
+        Query device information to identify model and featureset
+
+        :return: (alias, model, list of supported features)
+        :rtype: tuple
+        """
+
+        info = self.sys_info
+
+        #  TODO sysinfo parsing should happen in sys_info
+        #  to avoid calling fetch here twice..
+        return info["alias"], info["model"], self.features
+
+    @property
+    def model(self):
+        """
+        Get model of the device
+
+        :return: device model
+        :rtype: str
+        :raises SmartPlugException: on error
+        """
+        return self.sys_info['model']
+
+    @property
+    def alias(self):
+        """
+        Get current device alias (name)
+
+        :return: Device name aka alias.
+        :rtype: str
+        """
+        return self.sys_info['alias']
+
+    @alias.setter
+    def alias(self, alias):
+        """
+        Sets the device name aka alias.
+
+        :param alias: New alias (name)
+        :raises SmartPlugException: on error
+        """
+        self._query_helper("system", "set_dev_alias", {"alias": alias})
+
+    @property
+    def icon(self):
+        """
+        Returns device icon
+
+        Note: not working on HS110, but is always empty.
+
+        :return: icon and its hash
+        :rtype: dict
+        :raises SmartPlugException: on error
+        """
+        return self._query_helper("system", "get_dev_icon")
+
+    @icon.setter
+    def icon(self, icon):
+        """
+        Content for hash and icon are unknown.
+
+        :param str icon: Icon path(?)
+        :raises NotImplementedError: when not implemented
+        :raises SmartPlugError: on error
+        """
+        raise NotImplementedError("Values for this call are unknown at this point.")
+        # here just for the sake of completeness
+        # self._query_helper("system", "set_dev_icon", {"icon": "", "hash": ""})
+        # self.initialize()
+
+    @property
+    def time(self):
+        """
+        Returns current time from the device.
+
+        :return: datetime for device's time
+        :rtype: datetime.datetime
+        :raises SmartPlugException: on error
+        """
+        res = self._query_helper("time", "get_time")
+        return datetime.datetime(res["year"], res["month"], res["mday"],
+                                 res["hour"], res["min"], res["sec"])
+
+    @time.setter
+    def time(self, ts):
+        """
+        Sets time based on datetime object.
+        Note: this calls set_timezone() for setting.
+
+        :param datetime.datetime ts: New date and time
+        :return: result
+        :type: dict
+        :raises NotImplemented: when not implemented.
+        :raises SmartPlugException: on error
+        """
+        raise NotImplementedError("Fails with err_code == 0 with HS110.")
+        """ here just for the sake of completeness / if someone figures out why it doesn't work.
+        ts_obj = {
+            "index": self.timezone["index"],
+            "hour": ts.hour,
+            "min": ts.minute,
+            "sec": ts.second,
+            "year": ts.year,
+            "month": ts.month,
+            "mday": ts.day,
+        }
+
+
+        response = self._query_helper("time", "set_timezone", ts_obj)
+        self.initialize()
+
+        return response
+        """
+
+    @property
+    def timezone(self):
+        """
+        Returns timezone information
+
+        :return: Timezone information
+        :rtype: dict
+        :raises SmartPlugException: on error
+        """
+        return self._query_helper("time", "get_timezone")
+
+    @property
+    def hw_info(self):
+        """
+        Returns information about hardware
+
+        :return: Information about hardware
+        :rtype: dict
+        """
+        keys = ["sw_ver", "hw_ver", "mac", "hwId", "fwId", "oemId", "dev_name"]
+        info = self.sys_info
+        return {key: info[key] for key in keys}
+
+    @property
+    def location(self):
+        """
+        Location of the device, as read from sysinfo
+
+        :return: latitude and longitude
+        :rtype: dict
+        """
+        info = self.sys_info
+        return {"latitude": info["latitude"],
+                "longitude": info["longitude"]}
+
+    @property
+    def rssi(self):
+        """
+        Returns WiFi signal strenth (rssi)
+
+        :return: rssi
+        :rtype: int
+        """
+        return self.sys_info["rssi"]
+
+    @property
+    def mac(self):
+        """
+        Returns mac address
+
+        :return: mac address in hexadecimal with colons, e.g. 01:23:45:67:89:ab
+        :rtype: str
+        """
+        return self.sys_info["mac"]
+
+    @mac.setter
+    def mac(self, mac):
+        """
+        Sets new mac address
+
+        :param str mac: mac in hexadecimal with colons, e.g. 01:23:45:67:89:ab
+        :raises SmartPlugException: on error
+        """
+        self._query_helper("system", "set_mac_addr", {"mac": mac})
+
+
+class SmartPlug(SmartDevice):
+    """Representation of a TP-Link Smart Switch.
+
+    Usage example when used as library:
+    p = SmartPlug("192.168.1.105")
+    # print the devices alias
+    print(p.alias)
+    # change state of plug
+    p.state = "ON"
+    p.state = "OFF"
+    # query and print current state of plug
+    print(p.state)
+
+    Errors reported by the device are raised as SmartPlugExceptions,
+    and should be handled by the user of the library.
+
+    Note:
+    The library references the same structure as defined for the D-Link Switch
+    """
+    # switch states
+    SWITCH_STATE_ON = 'ON'
+    SWITCH_STATE_OFF = 'OFF'
+    SWITCH_STATE_UNKNOWN = 'UNKNOWN'
+
+    # possible device features
+    FEATURE_ENERGY_METER = 'ENE'
+    FEATURE_TIMER = 'TIM'
+
+    ALL_FEATURES = (FEATURE_ENERGY_METER, FEATURE_TIMER)
+
+    def __init__(self, ip_address, protocol=None):
+        SmartDevice.__init__(self, ip_address, protocol)
+
     @property
     def state(self):
         """
@@ -159,16 +355,6 @@ class SmartPlug(object):
             self.turn_off()
         else:
             raise ValueError("State %s is not valid.", value)
-
-    def get_sysinfo(self):
-        """
-        Retrieve system information.
-
-        :return: sysinfo
-        :rtype dict
-        :raises SmartPlugException: on error
-        """
-        return self._query_helper("system", "get_sysinfo")
 
     @property
     def is_on(self):
@@ -306,31 +492,6 @@ class SmartPlug(object):
 
         return response['power']
 
-    def identify(self):
-        """
-        Query device information to identify model and featureset
-
-        :return: (alias, model, list of supported features)
-        :rtype: tuple
-        """
-
-        info = self.sys_info
-
-        #  TODO sysinfo parsing should happen in sys_info
-        #  to avoid calling fetch here twice..
-        return info["alias"], info["model"], self.features
-
-    @property
-    def model(self):
-        """
-        Get model of the device
-
-        :return: device model
-        :rtype: str
-        :raises SmartPlugException: on error
-        """
-        return self.sys_info['model']
-
     @property
     def features(self):
         """
@@ -347,26 +508,6 @@ class SmartPlug(object):
                                 feature, self.model)
 
         return features
-
-    @property
-    def alias(self):
-        """
-        Get current device alias (name)
-
-        :return: Device name aka alias.
-        :rtype: str
-        """
-        return self.sys_info['alias']
-
-    @alias.setter
-    def alias(self, alias):
-        """
-        Sets the device name aka alias.
-
-        :param alias: New alias (name)
-        :raises SmartPlugException: on error
-        """
-        self._query_helper("system", "set_dev_alias", {"alias": alias})
 
     @property
     def led(self):
@@ -389,100 +530,6 @@ class SmartPlug(object):
         self._query_helper("system", "set_led_off", {"off": int(not state)})
 
     @property
-    def icon(self):
-        """
-        Returns device icon
-
-        Note: not working on HS110, but is always empty.
-
-        :return: icon and its hash
-        :rtype: dict
-        :raises SmartPlugException: on error
-        """
-        return self._query_helper("system", "get_dev_icon")
-
-    @icon.setter
-    def icon(self, icon):
-        """
-        Content for hash and icon are unknown.
-
-        :param str icon: Icon path(?)
-        :raises NotImplementedError: when not implemented
-        :raises SmartPlugError: on error
-        """
-        raise NotImplementedError("Values for this call are unknown at this point.")
-        # here just for the sake of completeness
-        # self._query_helper("system", "set_dev_icon", {"icon": "", "hash": ""})
-        # self.initialize()
-
-    @property
-    def time(self):
-        """
-        Returns current time from the device.
-
-        :return: datetime for device's time
-        :rtype: datetime.datetime
-        :raises SmartPlugException: on error
-        """
-        res = self._query_helper("time", "get_time")
-        return datetime.datetime(res["year"], res["month"], res["mday"],
-                                 res["hour"], res["min"], res["sec"])
-
-    @time.setter
-    def time(self, ts):
-        """
-        Sets time based on datetime object.
-        Note: this calls set_timezone() for setting.
-
-        :param datetime.datetime ts: New date and time
-        :return: result
-        :type: dict
-        :raises NotImplemented: when not implemented.
-        :raises SmartPlugException: on error
-        """
-        raise NotImplementedError("Fails with err_code == 0 with HS110.")
-        """ here just for the sake of completeness / if someone figures out why it doesn't work.
-        ts_obj = {
-            "index": self.timezone["index"],
-            "hour": ts.hour,
-            "min": ts.minute,
-            "sec": ts.second,
-            "year": ts.year,
-            "month": ts.month,
-            "mday": ts.day,
-        }
-
-
-        response = self._query_helper("time", "set_timezone", ts_obj)
-        self.initialize()
-
-        return response
-        """
-
-    @property
-    def timezone(self):
-        """
-        Returns timezone information
-
-        :return: Timezone information
-        :rtype: dict
-        :raises SmartPlugException: on error
-        """
-        return self._query_helper("time", "get_timezone")
-
-    @property
-    def hw_info(self):
-        """
-        Returns information about hardware
-
-        :return: Information about hardware
-        :rtype: dict
-        """
-        keys = ["sw_ver", "hw_ver", "mac", "hwId", "fwId", "oemId", "dev_name"]
-        info = self.sys_info
-        return {key: info[key] for key in keys}
-
-    @property
     def on_since(self):
         """
         Returns pretty-printed on-time
@@ -492,45 +539,3 @@ class SmartPlug(object):
         """
         return datetime.datetime.now() - \
                datetime.timedelta(seconds=self.sys_info["on_time"])
-
-    @property
-    def location(self):
-        """
-        Location of the device, as read from sysinfo
-
-        :return: latitude and longitude
-        :rtype: dict
-        """
-        info = self.sys_info
-        return {"latitude": info["latitude"],
-                "longitude": info["longitude"]}
-
-    @property
-    def rssi(self):
-        """
-        Returns WiFi signal strenth (rssi)
-
-        :return: rssi
-        :rtype: int
-        """
-        return self.sys_info["rssi"]
-
-    @property
-    def mac(self):
-        """
-        Returns mac address
-
-        :return: mac address in hexadecimal with colons, e.g. 01:23:45:67:89:ab
-        :rtype: str
-        """
-        return self.sys_info["mac"]
-
-    @mac.setter
-    def mac(self, mac):
-        """
-        Sets new mac address
-
-        :param str mac: mac in hexadecimal with colons, e.g. 01:23:45:67:89:ab
-        :raises SmartPlugException: on error
-        """
-        self._query_helper("system", "set_mac_addr", {"mac": mac})
