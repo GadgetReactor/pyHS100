@@ -75,6 +75,7 @@ class SmartPlug(object):
         :param str ip_address: ip address on which the device listens
         :raises SmartPlugException: when unable to communicate with the device
         """
+        ip_address = socket.gethostbyname(ip_address)
         socket.inet_pton(socket.AF_INET, ip_address)
         self.ip_address = ip_address
         if not protocol:
