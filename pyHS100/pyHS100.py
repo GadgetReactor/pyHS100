@@ -280,6 +280,342 @@ class SmartDevice(object):
         """
         self._query_helper("system", "set_mac_addr", {"mac": mac})
 
+    def get_emeter_realtime(self):
+        """
+        Retrive current energy readings from device.
+
+        :returns: current readings or False
+        :rtype: dict, False
+                  False if device has no energy meter or error occured
+        :raises SmartPlugException: on error
+        """
+        if not self.has_emeter:
+            return False
+
+        return self._query_helper(self.emeter_type, "get_realtime")
+
+    def get_emeter_daily(self, year=None, month=None):
+        """
+        Retrieve daily statistics for a given month
+
+        :param year: year for which to retrieve statistics (default: this year)
+        :param month: month for which to retrieve statistcs (default: this
+                      month)
+        :return: mapping of day of month to value
+                 False if device has no energy meter or error occured
+        :rtype: dict
+        :raises SmartPlugException: on error
+        """
+        if not self.has_emeter:
+            return False
+
+        if year is None:
+            year = datetime.datetime.now().year
+        if month is None:
+            month = datetime.datetime.now().month
+
+        response = self._query_helper(self.emeter_type, "get_daystat",
+                                      {'month': month, 'year': year})
+
+        if self.emeter_units:
+            key = 'energy_wh'
+        else:
+            key = 'energy'
+
+        return {entry['day']: entry[key]
+                for entry in response['day_list']}
+
+    def get_emeter_monthly(self, year=datetime.datetime.now().year):
+        """
+        Retrieve monthly statistics for a given year.
+
+        :param year: year for which to retrieve statistics (default: this year)
+        :return: dict: mapping of month to value
+                 False if device has no energy meter
+        :rtype: dict
+        :raises SmartPlugException: on error
+        """
+        if not self.has_emeter:
+            return False
+
+        response = self._query_helper(self.emeter_type, "get_monthstat",
+                                      {'year': year})
+
+        if self.emeter_units:
+            key = 'energy_wh'
+        else:
+            key = 'energy'
+
+        return {entry['month']: entry[key]
+                for entry in response['month_list']}
+
+    def erase_emeter_stats(self):
+        """
+        Erase energy meter statistics
+
+        :return: True if statistics were deleted
+                 False if device has no energy meter.
+        :rtype: bool
+        :raises SmartPlugException: on error
+        """
+        if not self.has_emeter:
+            return False
+
+        self._query_helper(self.emeter_type, "erase_emeter_stat", None)
+
+        # As query_helper raises exception in case of failure, we have
+        # succeeded when we are this far.
+        return True
+
+    def current_consumption(self):
+        """
+        Get the current power consumption in Watt.
+
+        :return: the current power consumption in Watt.
+                 False if device has no energy meter.
+        :raises SmartPlugException: on error
+        """
+        if not self.has_emeter:
+            return False
+
+        response = self.get_emeter_realtime()
+        if self.emeter_units:
+            return response['power_mw']
+        else:
+            return response['power']
+
+
+class SmartBulb(SmartDevice):
+    """Representation of a TP-Link Smart Bulb.
+
+    Usage example when used as library:
+    p = SmartBulb("192.168.1.105")
+    # print the devices alias
+    print(p.alias)
+    # change state of bulb
+    p.state = "ON"
+    p.state = "OFF"
+    # query and print current state of plug
+    print(p.state)
+    # check whether the bulb supports color changes
+    if p.is_color:
+    # set the color to an HSV tuple
+    p.hsv = (100, 0, 255)
+    # get the current HSV value
+    print(p.hsv)
+    # check whether the bulb supports setting color temperature
+    if p.is_variable_color_temp:
+    # set the color temperature in Kelvin
+    p.color_temp = 3000
+    # get the current color temperature
+    print(p.color_temp)
+    # check whether the bulb is dimmable
+    if p.is_dimmable:
+    # set the bulb to 50% brightness
+    p.brightness = 50
+    # check the current brightness
+    print(p.brightness)
+
+    Errors reported by the device are raised as SmartPlugExceptions,
+    and should be handled by the user of the library.
+
+    """
+    # bulb states
+    BULB_STATE_ON = 'ON'
+    BULB_STATE_OFF = 'OFF'
+
+    def __init__(self, ip_address, protocol=None):
+        SmartDevice.__init__(self, ip_address, protocol)
+        self.emeter_type = "smartlife.iot.common.emeter"
+        self.emeter_units = True
+
+    @property
+    def is_color(self):
+        """
+        Whether the bulb supports color changes
+
+        :return: True if the bulb supports color changes, False otherwise
+        :rtype: bool
+        """
+        return bool(self.sys_info['is_color'])
+
+    @property
+    def is_dimmable(self):
+        """
+        Whether the bulb supports brightness changes
+
+        :return: True if the bulb supports brightness changes, False otherwise
+        :rtype: bool
+        """
+        return bool(self.sys_info['is_dimmable'])
+
+    @property
+    def is_variable_color_temp(self):
+        """
+        Whether the bulb supports color temperature changes
+
+        :return: True if the bulb supports color temperature changes, False
+        otherwise
+        :rtype: bool
+        """
+        return bool(self.sys_info['is_variable_color_temp'])
+
+    def get_light_state(self):
+        return self._query_helper("smartlife.iot.smartbulb.lightingservice",
+                                  "get_light_state")
+
+    def set_light_state(self, state):
+        return self._query_helper("smartlife.iot.smartbulb.lightingservice",
+                                  "transition_light_state", state)
+
+    @property
+    def hsv(self):
+        """
+        Returns the current HSV state of the bulb, if supported
+
+        :return: tuple containing current hue, saturation and value (0-255)
+        :rtype: tuple
+        """
+
+        if not self.is_color:
+            return None
+
+        light_state = self.get_light_state()
+        if light_state['on_off'] == 0:
+            hue = light_state['dft_on_state']['hue']
+            saturation = light_state['dft_on_state']['saturation']
+            value = int(light_state['dft_on_state']['brightness'] * 255 / 100)
+        else:
+            hue = light_state['hue']
+            saturation = light_state['saturation']
+            value = int(light_state['brightness'] * 255 / 100)
+
+        return(hue, saturation, value)
+
+    @hsv.setter
+    def hsv(self, state):
+        """
+        Sets new HSV, if supported
+
+        :param tuple state: hue, saturation and value (0-255 each)
+        """
+        if not self.is_color:
+            return None
+
+        light_state = {
+            "hue": state[0],
+            "saturation": state[1],
+            "brightness": int(state[2] * 100 / 255),
+            }
+        return self.set_light_state(light_state)
+
+    @property
+    def color_temp(self):
+        """
+        Color temperature of the device, if supported
+
+        :return: Color temperature in Kelvin
+        :rtype: int
+        """
+        if not self.is_variable_color_temp:
+            return None
+
+        light_state = self.get_light_state()
+        if light_state['on_off'] == 0:
+            return(light_state['dft_on_state']['color_temp'])
+        else:
+            return(light_state['color_temp'])
+
+    @color_temp.setter
+    def color_temp(self, temp):
+        """
+        Set the color temperature of the device, if supported
+
+        :param int temp: The new color temperature, in Kelvin
+        """
+        if not self.is_variable_color_temp:
+            return None
+
+        light_state = {
+            "color_temp": temp,
+        }
+        return self.set_light_state(light_state)
+
+    @property
+    def brightness(self):
+        """
+        Current brightness of the device, if supported
+
+        :return: brightness in percent
+        :rtype: int
+        """
+        if not self.is_dimmable:
+            return None
+
+        light_state = self.get_light_state()
+        if light_state['on_off'] == 0:
+            return(light_state['dft_on_state']['brightness'])
+        else:
+            return(light_state['brightness'])
+
+    @brightness.setter
+    def brightness(self, brightness):
+        """
+        Set the current brightness of the device, if supported
+
+        :param int brightness: brightness in percent
+        """
+        if not self.is_dimmable:
+            return None
+
+        light_state = {
+            "brightness": brightness,
+        }
+        return self.set_light_state(light_state)
+
+    @property
+    def state(self):
+        """
+        Retrieve the bulb state
+
+        :returns: one of
+                  BULB_STATE_ON
+                  BULB_STATE_OFF
+        :rtype: str
+        """
+        light_state = self.get_light_state()
+        if light_state['on_off']:
+            return self.BULB_STATE_ON
+        return self.BULB_STATE_OFF
+
+    @state.setter
+    def state(self, bulb_state):
+        """
+        Set the new bulb state
+
+        :param bulb_state: one of
+                           BULB_STATE_ON
+                           BULB_STATE_OFF
+        """
+        print(bulb_state)
+        print(self.BULB_STATE_ON)
+        print(self.BULB_STATE_OFF)
+        if bulb_state == self.BULB_STATE_ON:
+            bulb_state = 1
+        elif bulb_state == self.BULB_STATE_OFF:
+            bulb_state = 0
+        else:
+            raise ValueError
+        
+        light_state = {
+            "on_off": bulb_state,
+        }
+        return self.set_light_state(light_state)
+
+    @property
+    def has_emeter(self):
+        return True
+
 
 class SmartPlug(SmartDevice):
     """Representation of a TP-Link Smart Switch.
@@ -313,6 +649,8 @@ class SmartPlug(SmartDevice):
 
     def __init__(self, ip_address, protocol=None):
         SmartDevice.__init__(self, ip_address, protocol)
+        self.emeter_type = "emeter"
+        self.emeter_units = False
 
     @property
     def state(self):
@@ -401,97 +739,6 @@ class SmartPlug(SmartDevice):
         """
         return SmartPlug.FEATURE_ENERGY_METER in self.features
 
-    def get_emeter_realtime(self):
-        """
-        Retrive current energy readings from device.
-
-        :returns: current readings or False
-        :rtype: dict, False
-                  False if device has no energy meter or error occured
-        :raises SmartPlugException: on error
-        """
-        if not self.has_emeter:
-            return False
-
-        return self._query_helper("emeter", "get_realtime")
-
-    def get_emeter_daily(self, year=None, month=None):
-        """
-        Retrieve daily statistics for a given month
-
-        :param year: year for which to retrieve statistics (default: this year)
-        :param month: month for which to retrieve statistcs (default: this
-                      month)
-        :return: mapping of day of month to value
-                 False if device has no energy meter or error occured
-        :rtype: dict
-        :raises SmartPlugException: on error
-        """
-        if not self.has_emeter:
-            return False
-
-        if year is None:
-            year = datetime.datetime.now().year
-        if month is None:
-            month = datetime.datetime.now().month
-
-        response = self._query_helper("emeter", "get_daystat",
-                                      {'month': month, 'year': year})
-
-        return {entry['day']: entry['energy']
-                for entry in response['day_list']}
-
-    def get_emeter_monthly(self, year=datetime.datetime.now().year):
-        """
-        Retrieve monthly statistics for a given year.
-
-        :param year: year for which to retrieve statistics (default: this year)
-        :return: dict: mapping of month to value
-                 False if device has no energy meter
-        :rtype: dict
-        :raises SmartPlugException: on error
-        """
-        if not self.has_emeter:
-            return False
-
-        response = self._query_helper("emeter", "get_monthstat",
-                                      {'year': year})
-
-        return {entry['month']: entry['energy']
-                for entry in response['month_list']}
-
-    def erase_emeter_stats(self):
-        """
-        Erase energy meter statistics
-
-        :return: True if statistics were deleted
-                 False if device has no energy meter.
-        :rtype: bool
-        :raises SmartPlugException: on error
-        """
-        if not self.has_emeter:
-            return False
-
-        self._query_helper("emeter", "erase_emeter_stat", None)
-
-        # As query_helper raises exception in case of failure, we have succeeded when we are this far.
-        return True
-
-    def current_consumption(self):
-        """
-        Get the current power consumption in Watt.
-
-        :return: the current power consumption in Watt.
-                 False if device has no energy meter.
-        :raises SmartPlugException: on error
-        """
-        if not self.has_emeter:
-            return False
-
-        response = self.get_emeter_realtime()
-
-        return response['power']
-
     @property
     def features(self):
         """
@@ -538,4 +785,4 @@ class SmartPlug(SmartDevice):
         :rtype: datetime
         """
         return datetime.datetime.now() - \
-               datetime.timedelta(seconds=self.sys_info["on_time"])
+            datetime.timedelta(seconds=self.sys_info["on_time"])
