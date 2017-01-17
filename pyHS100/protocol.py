@@ -53,9 +53,10 @@ class TPLinkSmartHomeProtocol:
 
         try:
             sock.shutdown(socket.SHUT_RDWR)
-            sock.close()
-        except:
+        except OSError:
             pass
+        finally:
+            sock.close()
 
         response = TPLinkSmartHomeProtocol.decrypt(buffer[4:])
         _LOGGER.debug("< (%i) %s", len(response), response)
