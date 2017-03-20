@@ -37,6 +37,7 @@ def discover(timeout):
     for dev in TPLinkSmartHomeProtocol.discover(timeout=timeout):
         print("Found device: %s" % pformat(dev))
 
+
 @cli.command()
 @pass_dev
 def sysinfo(plug):
