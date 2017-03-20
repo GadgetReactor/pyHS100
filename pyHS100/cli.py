@@ -3,13 +3,13 @@ import logging
 from click_datetime import Datetime
 from pprint import pformat
 
-from pyHS100 import SmartPlug
+from pyHS100 import SmartPlug, TPLinkSmartHomeProtocol
 
 pass_dev = click.make_pass_decorator(SmartPlug)
 
 
 @click.group(invoke_without_command=True)
-@click.option('--ip', envvar="PYHS100_IP", required=True)
+@click.option('--ip', envvar="PYHS100_IP", required=False)
 @click.option('--debug/--normal', default=False)
 @click.pass_context
 def cli(ctx, ip, debug):
@@ -19,12 +19,23 @@ def cli(ctx, ip, debug):
     else:
         logging.basicConfig(level=logging.INFO)
 
+    if ctx.invoked_subcommand == "discover":
+        return
+
     plug = SmartPlug(ip)
     ctx.obj = plug
 
     if ctx.invoked_subcommand is None:
         ctx.invoke(state)
 
+
+@cli.command()
+@click.option('--timeout', default=5, required=False)
+def discover(timeout):
+    """Discover devices in the network."""
+    click.echo("Discovering devices for %s seconds" % timeout)
+    for dev in TPLinkSmartHomeProtocol.discover(timeout=timeout):
+        print("Found device: %s" % pformat(dev))
 
 @cli.command()
 @pass_dev
