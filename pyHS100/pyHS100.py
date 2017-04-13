@@ -90,6 +90,27 @@ class SmartDevice(object):
         #  TODO use volyptuous
         return self.get_sysinfo()
 
+    @property
+    def is_off(self):
+        """
+        Returns whether device is off.
+
+        :return: True if device is off, False otherwise.
+        :rtype: bool
+        """
+        return not self.is_on
+
+    @property
+    def is_on(self):
+        """
+        Returns whether the device is on.
+
+        :return: True if the device is on, False otherwise.
+        :rtype: bool
+        :return:
+        """
+        raise NotImplementedError("Your subclass needs to implement this.")
+
     def get_sysinfo(self):
         """
         Retrieve system information.
@@ -482,7 +503,7 @@ class SmartBulb(SmartDevice):
             return None
 
         light_state = self.get_light_state()
-        if light_state['on_off'] == 0:
+        if not self.is_on:
             hue = light_state['dft_on_state']['hue']
             saturation = light_state['dft_on_state']['saturation']
             value = int(light_state['dft_on_state']['brightness'] * 255 / 100)
@@ -523,7 +544,7 @@ class SmartBulb(SmartDevice):
             return None
 
         light_state = self.get_light_state()
-        if light_state['on_off'] == 0:
+        if not self.is_on:
             return(light_state['dft_on_state']['color_temp'])
         else:
             return(light_state['color_temp'])
@@ -555,7 +576,7 @@ class SmartBulb(SmartDevice):
             return None
 
         light_state = self.get_light_state()
-        if light_state['on_off'] == 0:
+        if not self.is_on:
             return(light_state['dft_on_state']['brightness'])
         else:
             return(light_state['brightness'])
@@ -589,6 +610,10 @@ class SmartBulb(SmartDevice):
         if light_state['on_off']:
             return self.BULB_STATE_ON
         return self.BULB_STATE_OFF
+
+    @property
+    def is_on(self):
+        return self.state == self.BULB_STATE_ON
 
     @state.setter
     def state(self, bulb_state):
@@ -704,16 +729,6 @@ class SmartPlug(SmartDevice):
         :return: True if device is on, False otherwise
         """
         return bool(self.sys_info['relay_state'])
-
-    @property
-    def is_off(self):
-        """
-        Returns whether device is off.
-
-        :return: True if device is off, False otherwise.
-         :rtype: bool
-        """
-        return not self.is_on
 
     def turn_on(self):
         """
