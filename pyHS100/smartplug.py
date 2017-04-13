@@ -1,14 +1,10 @@
 import datetime
 import logging
 
-try:
-    basestring
-except NameError:
-    basestring = str
-
 from .pyHS100 import SmartDevice
 
 _LOGGER = logging.getLogger(__name__)
+
 
 class SmartPlug(SmartDevice):
     """Representation of a TP-Link Smart Switch.
@@ -78,7 +74,7 @@ class SmartPlug(SmartDevice):
         :raises SmartPlugException: on error
 
         """
-        if not isinstance(value, basestring):
+        if not isinstance(value, str):
             raise ValueError("State must be str, not of %s.", type(value))
         elif value.upper() == SmartPlug.SWITCH_STATE_ON:
             self.turn_on()

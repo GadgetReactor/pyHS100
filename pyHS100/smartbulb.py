@@ -1,5 +1,6 @@
 from .pyHS100 import SmartDevice
 
+
 class SmartBulb(SmartDevice):
     """Representation of a TP-Link Smart Bulb.
 

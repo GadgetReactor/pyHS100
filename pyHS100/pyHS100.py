@@ -13,18 +13,6 @@ Stroetmann which is licensed under the Apache License, Version 2.0.
 You may obtain a copy of the license at
 http://www.apache.org/licenses/LICENSE-2.0
 """
-
-# python2 compatibility
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
-from future.utils import raise_from
-
-try:
-    basestring
-except NameError:
-    basestring = str
-
 import datetime
 import logging
 import socket
@@ -55,32 +43,35 @@ class SmartDevice(object):
             protocol = TPLinkSmartHomeProtocol()
         self.protocol = protocol
 
-    def _query_helper(self, target, cmd, arg={}):
+    def _query_helper(self, target, cmd, arg=None):
         """
         Helper returning unwrapped result object and doing error handling.
 
         :param target: Target system {system, time, emeter, ..}
         :param cmd: Command to execute
-        :param arg: JSON object passed as parameter to the command, defaults to {}
+        :param arg: JSON object passed as parameter to the command
         :return: Unwrapped result for the call.
         :rtype: dict
         :raises SmartPlugException: if command was not executed correctly
         """
-
+        if arg is None:
+            arg = {}
         try:
             response = self.protocol.query(
                 host=self.ip_address,
                 request={target: {cmd: arg}}
             )
         except Exception as ex:
-            raise_from(SmartPlugException(), ex)
+            raise SmartPlugException('Communication error') from ex
 
         if target not in response:
-            raise SmartPlugException("No required {} in response: {}".format(target, response))
+            raise SmartPlugException("No required {} in response: {}"
+                                     .format(target, response))
 
         result = response[target]
         if "err_code" in result and result["err_code"] != 0:
-            raise SmartPlugException("Error on {}.{}: {}".format(target, cmd, result))
+            raise SmartPlugException("Error on {}.{}: {}"
+                                     .format(target, cmd, result))
 
         result = result[cmd]
         del result["err_code"]
@@ -190,9 +181,10 @@ class SmartDevice(object):
         :raises NotImplementedError: when not implemented
         :raises SmartPlugError: on error
         """
-        raise NotImplementedError("Values for this call are unknown at this point.")
+        raise NotImplementedError()
         # here just for the sake of completeness
-        # self._query_helper("system", "set_dev_icon", {"icon": "", "hash": ""})
+        # self._query_helper("system",
+        #                    "set_dev_icon", {"icon": "", "hash": ""})
         # self.initialize()
 
     @property
@@ -221,7 +213,10 @@ class SmartDevice(object):
         :raises SmartPlugException: on error
         """
         raise NotImplementedError("Fails with err_code == 0 with HS110.")
-        """ here just for the sake of completeness / if someone figures out why it doesn't work.
+        """
+        here just for the sake of completeness.
+        if someone figures out why it doesn't work,
+        please create a PR :-)
         ts_obj = {
             "index": self.timezone["index"],
             "hour": ts.hour,
