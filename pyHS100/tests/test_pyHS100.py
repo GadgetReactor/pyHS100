@@ -7,8 +7,8 @@ from functools import partial
 import datetime
 import re
 
-from pyHS100 import SmartPlug, SmartPlugException
-from pyHS100.tests.fakes import FakeTransportProtocol, sysinfo_hs110
+from .. import SmartPlug, SmartPlugException
+from .fakes import FakeTransportProtocol, sysinfo_hs110
 
 PLUG_IP = '192.168.250.186'
 SKIP_STATE_TESTS = False

@@ -5,8 +5,8 @@ from unittest import TestCase, skip, skipIf
 from voluptuous import Schema, Invalid, All, Range
 from functools import partial
 
-from pyHS100 import SmartBulb, SmartPlugException
-from pyHS100.tests.fakes import FakeTransportProtocol, sysinfo_lb130
+from .. import SmartBulb, SmartPlugException
+from .fakes import FakeTransportProtocol, sysinfo_lb130
 
 BULB_IP = '192.168.250.186'
 SKIP_STATE_TESTS = False
