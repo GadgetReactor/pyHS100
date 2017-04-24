@@ -291,8 +291,12 @@ class SmartDevice(object):
         :rtype: dict
         """
         info = self.sys_info
-        return {"latitude": info["latitude"],
-                "longitude": info["longitude"]}
+        if ("latitude" in info and "longitude" in info):
+            return {"latitude": info["latitude"],
+                    "longitude": info["longitude"]}
+        else:
+            return {"latitude": "N/A",
+                    "longitude": "N/A"}
 
     @property
     def rssi(self):
