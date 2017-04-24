@@ -295,8 +295,8 @@ class SmartDevice(object):
             return {"latitude": info["latitude"],
                     "longitude": info["longitude"]}
         else:
-            return {"latitude": "N/A",
-                    "longitude": "N/A"}
+            return {"latitude": None,
+                    "longitude": None}
 
     @property
     def rssi(self):
