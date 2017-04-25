@@ -270,6 +270,26 @@ class SmartDevice(object):
         """
         return self._query_helper("time", "get_timezone")
 
+    @timezone.setter
+    def timezone(self, zone_index):
+        """
+        Set the timezone, taking the current time from the device
+        The HS110, at least, requires date/time, but appears to ignore it
+
+        :param zone_index: int
+        """
+        device_time = self.time
+        tz_set_dict = {
+            'year': device_time.year,
+            'month': device_time.month,
+            'mday': device_time.day,
+            'hour': device_time.hour,
+            'min': device_time.minute,
+            'sec': device_time.second,
+            'index': zone_index
+        }
+        self._query_helper("time", "set_timezone", tz_set_dict)
+
     @property
     def hw_info(self):
         """
