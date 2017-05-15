@@ -19,13 +19,16 @@ import socket
 import enum
 
 from .protocol import TPLinkSmartHomeProtocol
-from .schedule import Schedule, NoScheduleFound
-from .countdown import Countdown, NoCountdownFound
-from .antitheft import AntiTheft, NoAntiTheftFound
+from . import schedule
+from . import countdown
+from . import antitheft
+
 
 _LOGGER = logging.getLogger(__name__)
 
-
+NoScheduleFound = schedule.NoScheduleFound
+NoCountdownFound = countdown.NoCountdownFound
+NoAntiTheftFound = antitheft.NoAntiTheftFound
 class SmartPlugException(Exception):
     """
     SmartPlugException gets raised for errors reported by the plug.
@@ -60,9 +63,9 @@ class SmartDevice(object):
             protocol = TPLinkSmartHomeProtocol()
         self.protocol = protocol
 
-        self.schedule = Schedule(self, self._query_helper)
-        self.countdown = Countdown(self, self._query_helper)
-        self.antitheft = AntiTheft(self, self._query_helper)
+        self.schedule = schedule.Schedule(self, self._query_helper)
+        self.countdown = countdown.Countdown(self, self._query_helper)
+        self.antitheft = antitheft.AntiTheft(self, self._query_helper)
 
     def new_schedule(self):
         """
@@ -72,7 +75,7 @@ class SmartDevice(object):
         :rtype: None
         """
 
-        self.schedule = Schedule(self, self._query_helper)
+        self.schedule = schedule.Schedule(self, self._query_helper)
 
     def new_countdown(self):
         """
@@ -82,7 +85,7 @@ class SmartDevice(object):
         :rtype: None
         """
 
-        self.countdown = Countdown(self, self._query_helper)
+        self.countdown = countdown.Countdown(self, self._query_helper)
 
     def new_antitheft(self):
         """
@@ -91,7 +94,7 @@ class SmartDevice(object):
         :rtype: None
         """
 
-        self.antitheft = AntiTheft(self, self._query_helper)
+        self.antitheft = antitheft.AntiTheft(self, self._query_helper)
 
     def _query_helper(self, target, cmd, arg=None):
         """
