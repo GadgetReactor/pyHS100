@@ -150,7 +150,7 @@ class Schedule(object):
 
         if name is None:
             return dict(list(schedule for schedule in self))
-        elif args and item not in self:
+        elif args and name not in self:
             return args[0]
         else:
             return self[name]
