@@ -19,9 +19,9 @@ import socket
 import enum
 
 from .protocol import TPLinkSmartHomeProtocol
-from .schedule import *
-from .countdown import *
-from .antitheft import *
+from .schedule import Schedule, NoScheduleFound
+from .countdown import Countdown, NoCountdownFound
+from .antitheft import AntiTheft, NoAntiTheftFound
 
 _LOGGER = logging.getLogger(__name__)
 
