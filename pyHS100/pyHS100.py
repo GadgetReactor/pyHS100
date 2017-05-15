@@ -71,7 +71,7 @@ class SmartDevice(object):
         :return: None
         :rtype: None
         """
-    
+
         self.schedule = Schedule(self, self._query_helper)
 
     def new_countdown(self):
@@ -81,7 +81,7 @@ class SmartDevice(object):
         :return: None
         :rtype: None
         """
-    
+
         self.countdown = Countdown(self, self._query_helper)
 
     def new_antitheft(self):
@@ -90,7 +90,7 @@ class SmartDevice(object):
         :return: None
         :rtype: None
         """
-    
+
         self.antitheft = AntiTheft(self, self._query_helper)
 
     def _query_helper(self, target, cmd, arg=None):
@@ -349,9 +349,9 @@ class SmartDevice(object):
         :param tuple location: (float(latitude), float(latitude))
         :raises SmartPlugException: on error
         """
-    
+
         latitude, longitude = location
-    
+
         if latitude < 0:
             latitude = -latitude
         if longitude < 0:
@@ -579,7 +579,7 @@ class SmartDevice(object):
         :rtype: str
         :raises SmartPlugException: on error
         """
-    
+
         return self.sysinfo["deviceId"]
 
     @device_id.setter
@@ -590,7 +590,7 @@ class SmartDevice(object):
         :param str deviceid: Device id
         :raises SmartPlugException: on error
         """
-    
+
         self._query_helper(
             "system",
             "set_device_id",
@@ -606,7 +606,7 @@ class SmartDevice(object):
         :rtype: str
         :raises SmartPlugException: on error
         """
-    
+
         return self.sysinfo["hwId"]
 
     @hardware_id.setter
@@ -617,7 +617,7 @@ class SmartDevice(object):
         :param str hwid: Device hardware id
         :raises SmartPlugException: on error
         """
-    
+
         self._query_helper("system", "set_hw_id", {"hwId": hwid})
 
     def test_uboot(self):
@@ -628,7 +628,7 @@ class SmartDevice(object):
         :rtype: None
         :raises SmartPlugException: on error
         """
-    
+
         self._query_helper("system", "test_check_uboot")
 
     def firmware_download_url(self, url):
@@ -640,7 +640,7 @@ class SmartDevice(object):
         :rtype: None
         :raises SmartPlugException: on error
         """
-    
+
         self._query_helper("system", "download_firmware", {"url": url})
 
     def firmware_download_flash(self):
@@ -651,7 +651,7 @@ class SmartDevice(object):
         :rtype: None
         :raises SmartPlugException: on error
         """
-    
+
         self._query_helper("system", "flash_firmware", {})
 
     def firmware_download_state(self):
@@ -662,7 +662,7 @@ class SmartDevice(object):
         :rtype: str
         :raises SmartPlugException: on error
         """
-    
+
         self._query_helper("system", "get_download_state", {})
 
     def check_config(self):
@@ -673,7 +673,7 @@ class SmartDevice(object):
         :rtype: None
         :raises SmartPlugException: on error
         """
-    
+
         self._query_helper("system", "check_new_config")
 
     def scan_ap(self, refresh=1):
@@ -685,7 +685,7 @@ class SmartDevice(object):
         :rtype: list
         :raises SmartPlugException: on error
         """
-    
+
         return self._query_helper(
             "netif",
             "get_scaninfo",
@@ -704,7 +704,7 @@ class SmartDevice(object):
         :rtype: bool
         :raises SmartPlugException: on error
         """
-    
+
         return self._query_helper(
             "netif",
             "set_stainfo",
@@ -719,7 +719,7 @@ class SmartDevice(object):
         :rtype: list
         :raises SmartPlugException: on error
         """
-    
+
         return self._query_helper("cnCloud", "get_intl_fw_list", {})
 
     @property
@@ -731,7 +731,7 @@ class SmartDevice(object):
         :rtype: dict
         :raises SmartPlugException: on error
         """
-    
+
         return self._query_helper("cnCloud", "get_info")
 
     @cloud_server.setter
@@ -744,7 +744,7 @@ class SmartDevice(object):
         :rtype: None
         :raises SmartPlugException: on error
         """
-    
+
         self._query_helper(
             "cnCloud",
             "set_server_url",
@@ -761,7 +761,7 @@ class SmartDevice(object):
         :rtype: None
         :raises SmartPlugException: on error
         """
-    
+
         self._query_helper(
             "cnCloud",
             "bind",
@@ -776,7 +776,7 @@ class SmartDevice(object):
         :rtype: None
         :raises SmartPlugException: on error
         """
-    
+
         return self._query_helper("cnCloud", "unbind")
 
     @property
@@ -788,7 +788,7 @@ class SmartDevice(object):
         :rtype: dict
         :raises SmartPlugException: on error
         """
-    
+
         return self._query_helper("emeter", "get_vgain_igain", {})
 
     @emeter_gain.setter
@@ -801,9 +801,9 @@ class SmartDevice(object):
         :rtype: None
         :raises SmartPlugException: on error
         """
-    
+
         vgain, igain = gains
-    
+
         self._query_helper(
             "emeter",
             "set_vgain_igain",
@@ -820,12 +820,9 @@ class SmartDevice(object):
         :rtype: None
         :raises SmartPlugException: on error
         """
-    
+
         return self._query_helper(
             "emeter",
             "start_calibration",
             {"vtarget": vtarget, "itarget": itarget}
         )
-
-
-

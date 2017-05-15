@@ -19,7 +19,7 @@ class Schedule(object):
     def __init__(self, _device, _query_helper):
         self._device = _device
         self._query_helper = _query_helper
-    
+
     @property
     def _get_schedule(self):
         """
@@ -29,12 +29,12 @@ class Schedule(object):
         :rtype: list
         :raises SmartPlugException: on error
         """
-        
+
         return self._query_helper(
             "schedule",
             "get_rules"
         )
-    
+
     def __iter__(self):
         """
         Iterates all rules.
@@ -43,10 +43,10 @@ class Schedule(object):
         :rtype: iterator
         :raises SmartPlugException: on error
         """
-        
+
         for schedule in self._get_schedule:
             yield schedule['name'], schedule
-    
+
     def __contains__(self, name):
         """
         Checks if rule name exists.
@@ -56,14 +56,14 @@ class Schedule(object):
         :rtype: bool
         :raises SmartPlugException: on error
         """
-        
+
         for n, _ in self:
             if n == name:
                 return True
         return False
-    
+
     def __setitem__(self, name, rule):
-        
+
         """
         Edits or Adds a new rule.
 
@@ -94,13 +94,13 @@ class Schedule(object):
         :return: None
         :rtype: None
         """
-        
+
         if name in ('_device', '_query_helper'):
             object.__setattr__(self, name, rule)
             return
-        
+
         rule['name'] = name
-        
+
         if name in self:
             rule['id'] = self[name]['id']
             self._query_helper(
@@ -114,7 +114,7 @@ class Schedule(object):
                 "add_rule",
                 rule
             )
-    
+
     def __delitem__(self, name):
         """
         Deletes rule.
@@ -125,7 +125,7 @@ class Schedule(object):
         :raises NoScheduleFound: If rule not found
         :raises SmartPlugException: on error
         """
-        
+
         for n, s in self:
             if n == name:
                 return self._query_helper(
@@ -134,7 +134,7 @@ class Schedule(object):
                     {"id": s['id']}
                 )
         raise NoScheduleFound(name)
-    
+
     def get(self, name=None, *args):
         """
         Gets rule
@@ -147,14 +147,14 @@ class Schedule(object):
         :raises NoScheduleFound: If rule not found
         :raises SmartPlugException: on error
         """
-        
+
         if name is None:
             return dict(list(schedule for schedule in self))
         elif args and item not in self:
             return args[0]
         else:
             return self[name]
-    
+
     def next(self):
         """
         Gets next rule
@@ -164,12 +164,12 @@ class Schedule(object):
         :raises NoScheduleFound: If rule not found
         :raises SmartPlugException: on error
         """
-        
+
         return self._query_helper(
             "schedule",
             "get_next_action"
         )
-    
+
     def __getitem__(self, name):
         """
         Gets rule
@@ -180,16 +180,16 @@ class Schedule(object):
         :raises NoScheduleFound: If rule not found
         :raises SmartPlugException: on error
         """
-        
+
         if name in self.__dict__:
             return self.__dict__[name]
-        
+
         for n, s in self:
             if n == name:
                 return s
-        
+
         raise NoScheduleFound(name)
-    
+
     def __del__(self):
         """
         Deletes all rules.
@@ -198,7 +198,7 @@ class Schedule(object):
         :rtype: None
         :raises SmartPlugException: on error
         """
-        
+
         self._query_helper(
             "schedule",
             "delete_all_rules"
@@ -208,14 +208,11 @@ class Schedule(object):
             "erase_runtime_stat"
         )
         self._device.new_schedule()
-    
-    
+
+
 class NoScheduleFound(Exception):
-    
     def __init__(self, name):
         self.msg = 'There is no schedule by the name %s.' % name
-        
+
     def __str__(self):
         return self.msg
-
-

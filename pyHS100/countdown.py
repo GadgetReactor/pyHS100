@@ -19,7 +19,7 @@ class Countdown(object):
     def __init__(self, _device, _query_helper):
         self._device = _device
         self._query_helper = _query_helper
-    
+
     @property
     def _get_countdown(self):
         """
@@ -29,12 +29,12 @@ class Countdown(object):
         :rtype: list
         :raises SmartPlugException: on error
         """
-        
+
         return self._query_helper(
             "count_down",
             "get_rules"
         )
-    
+
     def __iter__(self):
         """
         Iterates all rules.
@@ -43,10 +43,10 @@ class Countdown(object):
         :rtype: iterator
         :raises SmartPlugException: on error
         """
-        
+
         for countdown in self._get_countdown:
             yield countdown['name'], countdown
-    
+
     def __contains__(self, name):
         """
         Checks if rule name exists.
@@ -56,14 +56,14 @@ class Countdown(object):
         :rtype: bool
         :raises SmartPlugException: on error
         """
-        
+
         for n, _ in self:
             if n == name:
                 return True
         return False
-    
+
     def __setitem__(self, name, rule):
-        
+
         """
         Edits or Adds a new rule.
 
@@ -82,13 +82,13 @@ class Countdown(object):
         :rtype: None
         :raises SmartPlugException: on error
         """
-        
+
         if name in ('_device', '_query_helper'):
             object.__setattr__(self, name, rule)
             return
-        
+
         rule['name'] = name
-        
+
         if name in self:
             rule['id'] = self[name]['id']
             self._query_helper(
@@ -102,7 +102,7 @@ class Countdown(object):
                 "add_rule",
                 rule
             )
-    
+
     def __delitem__(self, name):
         """
         Deletes rule.
@@ -113,7 +113,7 @@ class Countdown(object):
         :raises NoCountdownFound: If rule not found
         :raises SmartPlugException: on error
         """
-        
+
         for n, c in self:
             if name == n:
                 return self._query_helper(
@@ -122,7 +122,7 @@ class Countdown(object):
                     {"id": c['id']}
                 )
         raise NoCountdownFound(name)
-    
+
     def get(self, name=None, *args):
         """
         Gets rule
@@ -135,14 +135,14 @@ class Countdown(object):
         :raises NoCountdownFound: If rule not found
         :raises SmartPlugException: on error
         """
-        
+
         if name is None:
             return dict(list(countdown for countdown in self))
         elif args and name not in self:
             return args[0]
         else:
             return self[name]
-    
+
     def __getitem__(self, name):
         """
         Gets rule
@@ -153,16 +153,16 @@ class Countdown(object):
         :raises NoCountdownFound: If rule not found
         :raises SmartPlugException: on error
         """
-        
+
         if name in self.__dict__:
             return self.__dict__[name]
-        
+
         for n, c in self:
             if n == name:
                 return c
-        
+
         raise NoCountdownFound(name)
-    
+
     def __del__(self):
         """
         Deletes all rules.
@@ -171,18 +171,17 @@ class Countdown(object):
         :rtype: None
         :raises SmartPlugException: on error
         """
-        
+
         self._query_helper(
             "count_down",
             "delete_all_rules"
         )
         self._device.new_countdown()
-    
-    
+
+
 class NoCountdownFound(Exception):
-    
     def __init__(self, name):
         self.msg = 'There is no countdown by the name %s.' % name
-        
+
     def __str__(self):
         return self.msg

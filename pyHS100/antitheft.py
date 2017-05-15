@@ -19,7 +19,7 @@ class AntiTheft(object):
     def __init__(self, _device, _query_helper):
         self._device = _device
         self._query_helper = _query_helper
-    
+
     @property
     def _get_antitheft(self):
         """
@@ -29,12 +29,12 @@ class AntiTheft(object):
         :rtype: list
         :raises SmartPlugException: on error
         """
-        
+
         return self._query_helper(
             "anti_theft",
             "get_rules"
         )
-    
+
     def __iter__(self):
         """
         Iterates all rules.
@@ -43,10 +43,10 @@ class AntiTheft(object):
         :rtype: iterator
         :raises SmartPlugException: on error
         """
-        
+
         for antitheft in self._get_antitheft:
             yield antitheft['name'], antitheft
-    
+
     def __contains__(self, name):
         """
         Checks if rule name exists.
@@ -56,12 +56,12 @@ class AntiTheft(object):
         :rtype: bool
         :raises SmartPlugException: on error
         """
-        
+
         for n, _ in self:
             if n == name:
                 return True
         return False
-    
+
     def __setitem__(self, name, rule):
         """
         Edits or Adds a new rule.
@@ -94,13 +94,13 @@ class AntiTheft(object):
         :rtype: None
         :raises SmartPlugException: on error
         """
-        
+
         if name in ('_device', '_query_helper'):
             object.__setattr__(self, name, rule)
             return
-        
+
         rule['name'] = name
-        
+
         if name in self:
             rule['id'] = self[name]['id']
             self._query_helper(
@@ -114,7 +114,7 @@ class AntiTheft(object):
                 "add_rule",
                 rule
             )
-    
+
     def __delitem__(self, name):
         """
         Deletes rule.
@@ -125,7 +125,7 @@ class AntiTheft(object):
         :raises NoAntiTheftFound: If rule not found
         :raises SmartPlugException: on error
         """
-        
+
         for n, a in self:
             if n == name:
                 return self._query_helper(
@@ -134,7 +134,7 @@ class AntiTheft(object):
                     {"id": a['id']}
                 )
         raise NoAntiTheftFound(name)
-    
+
     def get(self, name=None, *args):
         """
         Gets rule
@@ -147,14 +147,14 @@ class AntiTheft(object):
         :raises NoAntiTheftFound: If rule not found
         :raises SmartPlugException: on error
         """
-        
+
         if name is None:
             return dict(list(antitheft for antitheft in self))
         elif args and name not in self:
             return args[0]
         else:
             return self[name]
-    
+
     def __getitem__(self, name):
         """
         Gets rule
@@ -165,16 +165,16 @@ class AntiTheft(object):
         :raises NoAntiTheftFound: If rule not found
         :raises SmartPlugException: on error
         """
-        
+
         if name in self.__dict__:
             return self.__dict__[name]
-        
+
         for n, a in self:
             if n == name:
                 return a
-        
+
         raise NoAntiTheftFound(name)
-    
+
     def __del__(self):
         """
         Deletes all rules.
@@ -183,18 +183,17 @@ class AntiTheft(object):
         :rtype: None
         :raises SmartPlugException: on error
         """
-        
+
         self._query_helper(
             "anti_theft",
             "delete_all_rules"
         )
         self._device.new_antitheft()
-    
-    
+
+
 class NoAntiTheftFound(Exception):
-    
     def __init__(self, name):
         self.msg = 'There is no antitheft by the name %s.' % name
-        
+
     def __str__(self):
         return self.msg
