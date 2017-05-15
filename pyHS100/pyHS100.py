@@ -19,6 +19,9 @@ import socket
 import enum
 
 from .protocol import TPLinkSmartHomeProtocol
+from .schedule import *
+from .countdown import *
+from .antitheft import *
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -56,6 +59,39 @@ class SmartDevice(object):
         if not protocol:
             protocol = TPLinkSmartHomeProtocol()
         self.protocol = protocol
+
+        self.schedule = Schedule(self, self._query_helper)
+        self.countdown = Countdown(self, self._query_helper)
+        self.antitheft = AntiTheft(self, self._query_helper)
+
+    def new_schedule(self):
+        """
+        Used by Schedule instance when it gets deleted.
+
+        :return: None
+        :rtype: None
+        """
+    
+        self.schedule = Schedule(self, self._query_helper)
+
+    def new_countdown(self):
+        """
+        Used by Countdown instance when it gets deleted.
+
+        :return: None
+        :rtype: None
+        """
+    
+        self.countdown = Countdown(self, self._query_helper)
+
+    def new_antitheft(self):
+        """
+        Used by AntiTheft instance when it gets deleted.
+        :return: None
+        :rtype: None
+        """
+    
+        self.antitheft = AntiTheft(self, self._query_helper)
 
     def _query_helper(self, target, cmd, arg=None):
         """
@@ -305,6 +341,39 @@ class SmartDevice(object):
 
         return loc
 
+    @location.setter
+    def location(self, location=(0.0, 0.0)):
+        """
+        Sets new location
+
+        :param tuple location: (float(latitude), float(latitude))
+        :raises SmartPlugException: on error
+        """
+    
+        latitude, longitude = location
+    
+        if latitude < 0:
+            latitude = -latitude
+        if longitude < 0:
+            longitude = -longitude
+
+        info = self.sys_info
+
+        if "latitude" in info and "longitude" in info:
+            self._query_helper(
+                "system",
+                "set_dev_location",
+                dict(latitude=latitude, longitude=longitude)
+            )
+        elif "latitude_i" in info and "longitude_i" in info:
+            self._query_helper(
+                "system",
+                "set_dev_location",
+                dict(latitude_i=latitude, longitude_i=longitude)
+            )
+        else:
+            _LOGGER.warning("Unsupported device location.")
+
     @property
     def rssi(self):
         """
@@ -480,3 +549,283 @@ class SmartDevice(object):
         :rtype: dict
         """
         raise NotImplementedError("Device subclass needs to implement this.")
+
+    def reboot(self, delay=1):
+        """
+        Reboot device.
+
+        :param delay: delay in seconds until reboot
+        :return: None
+        """
+        self._query_helper("system", "reboot", {"delay": delay})
+
+    def reset(self, delay=1):
+        """
+        Reset device to factory defaults.
+
+        :param delay: delay in seconds until reboot
+        :return: None
+        :rtype: None
+        :raises SmartPlugException: on error
+        """
+        self._query_helper("system", "reset", {"delay": delay})
+
+    @property
+    def device_id(self):
+        """
+        Gets the device id.
+
+        :return: Device id
+        :rtype: str
+        :raises SmartPlugException: on error
+        """
+    
+        return self.sysinfo["deviceId"]
+
+    @device_id.setter
+    def device_id(self, deviceid):
+        """
+        Sets the device id.
+
+        :param str deviceid: Device id
+        :raises SmartPlugException: on error
+        """
+    
+        self._query_helper(
+            "system",
+            "set_device_id",
+            {"deviceId": deviceid}
+        )
+
+    @property
+    def hardware_id(self):
+        """
+        Gets the device hardware id.
+
+        :return: Hardware id
+        :rtype: str
+        :raises SmartPlugException: on error
+        """
+    
+        return self.sysinfo["hwId"]
+
+    @hardware_id.setter
+    def hardware_id(self, hwid):
+        """2
+        Sets the device id.
+
+        :param str hwid: Device hardware id
+        :raises SmartPlugException: on error
+        """
+    
+        self._query_helper("system", "set_hw_id", {"hwId": hwid})
+
+    def test_uboot(self):
+        """
+        Perform uBoot boot loader check.
+
+        :return: None
+        :rtype: None
+        :raises SmartPlugException: on error
+        """
+    
+        self._query_helper("system", "test_check_uboot")
+
+    def firmware_download_url(self, url):
+        """
+        Download Firmware from URL
+
+        :param str url: URL for firmware to download
+        :return: None
+        :rtype: None
+        :raises SmartPlugException: on error
+        """
+    
+        self._query_helper("system", "download_firmware", {"url": url})
+
+    def firmware_download_flash(self):
+        """
+        Flashes the downloaded firmware.
+
+        :return: None
+        :rtype: None
+        :raises SmartPlugException: on error
+        """
+    
+        self._query_helper("system", "flash_firmware", {})
+
+    def firmware_download_state(self):
+        """
+        Gets the firmware download state.
+
+        :return: Download state
+        :rtype: str
+        :raises SmartPlugException: on error
+        """
+    
+        self._query_helper("system", "get_download_state", {})
+
+    def check_config(self):
+        """
+        Checks devices config.
+
+        :return: None
+        :rtype: None
+        :raises SmartPlugException: on error
+        """
+    
+        self._query_helper("system", "check_new_config")
+
+    def scan_ap(self, refresh=1):
+        """
+        Scans for access points.
+
+        :param int refresh: Refresh interval in seconds.
+        :return: Returns a list of access points.
+        :rtype: list
+        :raises SmartPlugException: on error
+        """
+    
+        return self._query_helper(
+            "netif",
+            "get_scaninfo",
+            {"refresh": refresh}
+        )
+
+    # TODO: map out the key_types
+    def connect_ap(self, ssid='', password='', key_type=0):
+        """
+        Connects to an access point.
+
+        :param str ssid: Access point ssid.
+        :param str password: Access point password.
+        :param int key_type: Access point encryption type.
+        :return: bool
+        :rtype: bool
+        :raises SmartPlugException: on error
+        """
+    
+        return self._query_helper(
+            "netif",
+            "set_stainfo",
+            {"ssid": ssid, "password": password, "key_type": key_type}
+        )
+
+    def get_firmware_list(self):
+        """
+        Get Firmware List from Cloud Server.
+
+        :return: List of firmwares on cloud server
+        :rtype: list
+        :raises SmartPlugException: on error
+        """
+    
+        return self._query_helper("cnCloud", "get_intl_fw_list", {})
+
+    @property
+    def cloud_server(self):
+        """
+        Get Cloud Info.
+
+        :return: Cloud info Server, Username, Connection Status
+        :rtype: dict
+        :raises SmartPlugException: on error
+        """
+    
+        return self._query_helper("cnCloud", "get_info")
+
+    @cloud_server.setter
+    def cloud_server(self, server):
+        """
+        Set cloud server url.
+
+        :param str server: Server url.
+        :return: None
+        :rtype: None
+        :raises SmartPlugException: on error
+        """
+    
+        self._query_helper(
+            "cnCloud",
+            "set_server_url",
+            {"server": server}
+        )
+
+    def cloud_server_bind(self, username, password):
+        """
+        Register device on cloud server.
+
+        :param str username: Username.
+        :param str password: Password.
+        :return: None
+        :rtype: None
+        :raises SmartPlugException: on error
+        """
+    
+        self._query_helper(
+            "cnCloud",
+            "bind",
+            {"username": username, "password": password}
+        )
+
+    def cloud_server_unbind(self):
+        """
+        Unregister device from cloud server.
+
+        :return: None
+        :rtype: None
+        :raises SmartPlugException: on error
+        """
+    
+        return self._query_helper("cnCloud", "unbind")
+
+    @property
+    def emeter_gain(self):
+        """
+        Get EMeter voltage and current gains.
+
+        :return: dict voltage and current gains
+        :rtype: dict
+        :raises SmartPlugException: on error
+        """
+    
+        return self._query_helper("emeter", "get_vgain_igain", {})
+
+    @emeter_gain.setter
+    def emeter_gain(self, gains=(0, 0)):
+        """
+        Set EMeter voltage and current gains.
+
+        :param tuple gains: tuple(int(voltage_gain), int(current_gain))
+        :return: None
+        :rtype: None
+        :raises SmartPlugException: on error
+        """
+    
+        vgain, igain = gains
+    
+        self._query_helper(
+            "emeter",
+            "set_vgain_igain",
+            {"vgain": vgain, "igain": igain}
+        )
+
+    def emeter_calibration(self, vtarget, itarget):
+        """
+        Starts EMeter calibration.
+
+        :param int vtarget: Voltage target.
+        :param int itarget: Current target.
+        :return: None
+        :rtype: None
+        :raises SmartPlugException: on error
+        """
+    
+        return self._query_helper(
+            "emeter",
+            "start_calibration",
+            {"vtarget": vtarget, "itarget": itarget}
+        )
+
+
+
