@@ -507,3 +507,12 @@ class SmartDevice(object):
         :rtype: dict
         """
         raise NotImplementedError("Device subclass needs to implement this.")
+
+    def reboot(self, delay=1):
+        """
+        Reboot device.
+
+        :param delay: delay in seconds until reboot
+        :return: None
+        """
+        self._query_helper("system", "reboot", {"delay": delay})
