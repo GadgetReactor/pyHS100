@@ -722,3 +722,33 @@ class SmartDevice(object):
         :raises SmartPlugException: on error
         """
         return self._query_helper("cnCloud", "unbind")
+
+    # TODO: check to see if the gains are for voltage and current
+    @property
+    def emeter_gain(self):
+        """
+        Get EMeter voltage and current gains.
+
+        :return: dict voltage and current gains
+        :rtype: dict
+        :raises SmartPlugException: on error
+        """
+        return self._query_helper("emeter", "get_vgain_igain", {})
+
+    @emeter_gain.setter
+    def emeter_gain(self, gains=(0, 0)):
+        """
+        Set EMeter voltage and current gains.
+
+        :param tuple gains: tuple(int(voltage_gain), int(current_gain))
+        :return: None
+        :rtype: None
+        :raises SmartPlugException: on error
+        """
+        vgain, igain = gains
+
+        self._query_helper(
+            "emeter",
+            "set_vgain_igain",
+            {"vgain": vgain, "igain": igain}
+        )
