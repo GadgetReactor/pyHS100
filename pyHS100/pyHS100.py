@@ -604,3 +604,14 @@ class SmartDevice(object):
         :raises SmartPlugException: on error
         """
         self._query_helper("system", "flash_firmware", {})
+
+    @property
+    def firmware_download_state(self):
+        """
+        Gets the firmware download state.
+
+        :return: Download state
+        :rtype: str
+        :raises SmartPlugException: on error
+        """
+        return self._query_helper("system", "get_download_state", {})
