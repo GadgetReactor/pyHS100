@@ -323,7 +323,16 @@ class SmartDevice(object):
         :return: mac address in hexadecimal with colons, e.g. 01:23:45:67:89:ab
         :rtype: str
         """
-        return self.sys_info["mac"]
+
+        info = self.sys_info
+        
+        if 'mac' in info:
+            return info["mac"]
+        elif 'mic_mac' in info:
+            return info['mic_mac']
+        else:
+            _LOGGER.warning("Unsupported device mac.")
+            return ''
 
     @mac.setter
     def mac(self, mac):
@@ -333,7 +342,18 @@ class SmartDevice(object):
         :param str mac: mac in hexadecimal with colons, e.g. 01:23:45:67:89:ab
         :raises SmartPlugException: on error
         """
-        self._query_helper("system", "set_mac_addr", {"mac": mac})
+        info = self.sys_info
+
+        if 'mac' in info:
+            self._query_helper("system", "set_mac_addr", {"mac": mac})
+        elif 'mic_mac' in info:
+            self._query_helper(
+                "system",
+                "set_mac_addr",
+                {"mic_mac": mac.replace(':', '')}
+            )
+        else:
+            _LOGGER.warning("Unsupported device mac.")
 
     def get_emeter_realtime(self):
         """
