@@ -696,3 +696,19 @@ class SmartDevice(object):
             "set_server_url",
             {"server": server}
         )
+
+    def cloud_server_bind(self, username, password):
+        """
+        Register device on cloud server.
+
+        :param str username: Username.
+        :param str password: Password.
+        :return: None
+        :rtype: None
+        :raises SmartPlugException: on error
+        """
+        self._query_helper(
+            "cnCloud",
+            "bind",
+            {"username": username, "password": password}
+        )
