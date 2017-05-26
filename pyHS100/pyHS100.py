@@ -516,3 +516,14 @@ class SmartDevice(object):
         :return: None
         """
         self._query_helper("system", "reboot", {"delay": delay})
+
+    def reset(self, delay=1):
+        """
+        Reset device to factory defaults.
+
+        :param delay: delay in seconds until reboot
+        :return: None
+        :rtype: None
+        :raises SmartPlugException: on error
+        """
+        self._query_helper("system", "reset", {"delay": delay})
