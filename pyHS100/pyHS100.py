@@ -615,3 +615,13 @@ class SmartDevice(object):
         :raises SmartPlugException: on error
         """
         return self._query_helper("system", "get_download_state", {})
+
+    def check_config(self):
+        """
+        Checks devices config.
+
+        :return: None
+        :rtype: None
+        :raises SmartPlugException: on error
+        """
+        self._query_helper("system", "check_new_config")
