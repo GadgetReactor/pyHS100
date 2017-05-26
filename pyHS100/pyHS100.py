@@ -583,3 +583,14 @@ class SmartDevice(object):
         :raises SmartPlugException: on error
         """
         self._query_helper("system", "test_check_uboot")
+
+    def firmware_download_url(self, url):
+        """
+        Download Firmware from URL
+
+        :param str url: URL for firmware to download
+        :return: None
+        :rtype: None
+        :raises SmartPlugException: on error
+        """
+        self._query_helper("system", "download_firmware", {"url": url})
