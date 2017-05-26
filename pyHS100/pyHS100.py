@@ -625,3 +625,19 @@ class SmartDevice(object):
         :raises SmartPlugException: on error
         """
         self._query_helper("system", "check_new_config")
+
+    # TODO: Find out how long scan_ap scans for
+    def scan_ap(self, refresh=1):
+        """
+        Scans for access points.
+
+        :param int refresh: Refresh interval in seconds.
+        :return: Returns a list of access points.
+        :rtype: list
+        :raises SmartPlugException: on error
+        """
+        return self._query_helper(
+            "netif",
+            "get_scaninfo",
+            {"refresh": refresh}
+        )
