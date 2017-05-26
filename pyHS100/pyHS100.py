@@ -641,3 +641,21 @@ class SmartDevice(object):
             "get_scaninfo",
             {"refresh": refresh}
         )
+
+    # TODO: map out the key_types
+    def connect_ap(self, ssid='', password='', key_type=0):
+        """
+        Connects to an access point.
+
+        :param str ssid: Access point ssid.
+        :param str password: Access point password.
+        :param int key_type: Access point encryption type.
+        :return: bool
+        :rtype: bool
+        :raises SmartPlugException: on error
+        """
+        return self._query_helper(
+            "netif",
+            "set_stainfo",
+            {"ssid": ssid, "password": password, "key_type": key_type}
+        )
