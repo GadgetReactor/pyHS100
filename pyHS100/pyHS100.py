@@ -659,3 +659,13 @@ class SmartDevice(object):
             "set_stainfo",
             {"ssid": ssid, "password": password, "key_type": key_type}
         )
+
+    def get_firmware_list(self):
+        """
+        Get Firmware List from Cloud Server.
+
+        :return: List of firmwares on cloud server
+        :rtype: list
+        :raises SmartPlugException: on error
+        """
+        return self._query_helper("cnCloud", "get_intl_fw_list", {})
