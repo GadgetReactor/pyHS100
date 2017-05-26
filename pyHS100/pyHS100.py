@@ -712,3 +712,13 @@ class SmartDevice(object):
             "bind",
             {"username": username, "password": password}
         )
+
+    def cloud_server_unbind(self):
+        """
+        Unregister device from cloud server.
+
+        :return: None
+        :rtype: None
+        :raises SmartPlugException: on error
+        """
+        return self._query_helper("cnCloud", "unbind")
