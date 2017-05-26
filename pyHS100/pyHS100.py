@@ -527,3 +527,28 @@ class SmartDevice(object):
         :raises SmartPlugException: on error
         """
         self._query_helper("system", "reset", {"delay": delay})
+
+    @property
+    def device_id(self):
+        """
+        Gets the device id.
+
+        :return: Device id
+        :rtype: str
+        :raises SmartPlugException: on error
+        """
+        return self.sysinfo["deviceId"]
+
+    @device_id.setter
+    def device_id(self, deviceid):
+        """
+        Sets the device id.
+
+        :param str deviceid: Device id
+        :raises SmartPlugException: on error
+        """
+        self._query_helper(
+            "system",
+            "set_device_id",
+            {"deviceId": deviceid}
+        )
