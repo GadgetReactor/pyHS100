@@ -305,6 +305,33 @@ class SmartDevice(object):
 
         return loc
 
+    @location.setter
+    def location(self, location=(0.0, 0.0)):
+        """
+        Sets new location
+
+        :param tuple location: (float(latitude), float(latitude))
+        :raises SmartPlugException: on error
+        """
+        latitude, longitude = location
+
+        info = self.sys_info
+
+        if "latitude" in info and "longitude" in info:
+            self._query_helper(
+                "system",
+                "set_dev_location",
+                dict(latitude=latitude, longitude=longitude)
+            )
+        elif "latitude_i" in info and "longitude_i" in info:
+            self._query_helper(
+                "system",
+                "set_dev_location",
+                dict(latitude_i=latitude, longitude_i=longitude)
+            )
+        else:
+            _LOGGER.warning("Unsupported device location.")
+
     @property
     def rssi(self):
         """
