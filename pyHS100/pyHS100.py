@@ -752,3 +752,20 @@ class SmartDevice(object):
             "set_vgain_igain",
             {"vgain": vgain, "igain": igain}
         )
+
+    # TODO check to see if targets are for voltage and current
+    def emeter_calibration(self, vtarget, itarget):
+        """
+        Starts EMeter calibration.
+
+        :param int vtarget: Voltage target.
+        :param int itarget: Current target.
+        :return: None
+        :rtype: None
+        :raises SmartPlugException: on error
+        """
+        return self._query_helper(
+            "emeter",
+            "start_calibration",
+            {"vtarget": vtarget, "itarget": itarget}
+        )
