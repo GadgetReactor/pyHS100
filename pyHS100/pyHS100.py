@@ -323,9 +323,8 @@ class SmartDevice(object):
         :return: mac address in hexadecimal with colons, e.g. 01:23:45:67:89:ab
         :rtype: str
         """
-
         info = self.sys_info
-        
+
         if 'mac' in info:
             return info["mac"]
         elif 'mic_mac' in info:
