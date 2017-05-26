@@ -669,3 +669,30 @@ class SmartDevice(object):
         :raises SmartPlugException: on error
         """
         return self._query_helper("cnCloud", "get_intl_fw_list", {})
+
+    @property
+    def cloud_server(self):
+        """
+        Get Cloud Info.
+
+        :return: Cloud info Server, Username, Connection Status
+        :rtype: dict
+        :raises SmartPlugException: on error
+        """
+        return self._query_helper("cnCloud", "get_info")
+
+    @cloud_server.setter
+    def cloud_server(self, server):
+        """
+        Set cloud server url.
+
+        :param str server: Server url.
+        :return: None
+        :rtype: None
+        :raises SmartPlugException: on error
+        """
+        self._query_helper(
+            "cnCloud",
+            "set_server_url",
+            {"server": server}
+        )
