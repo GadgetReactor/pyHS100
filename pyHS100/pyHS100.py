@@ -573,3 +573,13 @@ class SmartDevice(object):
         :raises SmartPlugException: on error
         """
         self._query_helper("system", "set_hw_id", {"hwId": hwid})
+
+    def test_uboot(self):
+        """
+        Perform uBoot boot loader check.
+
+        :return: None
+        :rtype: None
+        :raises SmartPlugException: on error
+        """
+        self._query_helper("system", "test_check_uboot")
