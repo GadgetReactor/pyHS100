@@ -552,3 +552,24 @@ class SmartDevice(object):
             "set_device_id",
             {"deviceId": deviceid}
         )
+
+    @property
+    def hardware_id(self):
+        """
+        Gets the device hardware id.
+
+        :return: Hardware id
+        :rtype: str
+        :raises SmartPlugException: on error
+        """
+        return self.sysinfo["hwId"]
+
+    @hardware_id.setter
+    def hardware_id(self, hwid):
+        """2
+        Sets the device id.
+
+        :param str hwid: Device hardware id
+        :raises SmartPlugException: on error
+        """
+        self._query_helper("system", "set_hw_id", {"hwId": hwid})
