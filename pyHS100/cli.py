@@ -136,9 +136,9 @@ def temperature(dev, value):
 
 
 @cli.command()
-@click.argument("h", type=click.FloatRange(0, 1), default=None)
-@click.argument("s", type=click.FloatRange(0, 1), default=None)
-@click.argument("v", type=click.FloatRange(0, 1), default=None)
+@click.argument("h", type=click.IntRange(0, 255), default=None)
+@click.argument("s", type=click.IntRange(0, 255), default=None)
+@click.argument("v", type=click.IntRange(0, 255), default=None)
 @pass_dev
 def hsv(dev, h, s, v):
     """Get or set color in HSV. (Bulb only)"""
