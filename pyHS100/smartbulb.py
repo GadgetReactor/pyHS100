@@ -32,7 +32,7 @@ class SmartBulb(SmartDevice):
     # check the current brightness
     print(p.brightness)
 
-    Errors reported by the device are raised as SmartPlugExceptions,
+    Errors reported by the device are raised as SmartDeviceExceptions,
     and should be handled by the user of the library.
 
     """

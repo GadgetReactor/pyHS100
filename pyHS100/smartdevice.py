@@ -35,7 +35,7 @@ class SmartDevice(object):
         Create a new SmartDevice instance, identified through its IP address.
 
         :param str ip_address: ip address on which the device listens
-        :raises SmartPlugException: when unable to communicate with the device
+        :raises SmartDeviceException: when unable to communicate with the device
         """
         socket.inet_pton(socket.AF_INET, ip_address)
         self.ip_address = ip_address
@@ -52,7 +52,7 @@ class SmartDevice(object):
         :param arg: JSON object passed as parameter to the command
         :return: Unwrapped result for the call.
         :rtype: dict
-        :raises SmartPlugException: if command was not executed correctly
+        :raises SmartDeviceException: if command was not executed correctly
         """
         if arg is None:
             arg = {}
@@ -121,7 +121,7 @@ class SmartDevice(object):
 
         :return: sysinfo
         :rtype dict
-        :raises SmartPlugException: on error
+        :raises SmartDeviceException: on error
         """
         return self._query_helper("system", "get_sysinfo")
 
@@ -146,7 +146,7 @@ class SmartDevice(object):
 
         :return: device model
         :rtype: str
-        :raises SmartPlugException: on error
+        :raises SmartDeviceException: on error
         """
         return self.sys_info['model']
 
@@ -166,7 +166,7 @@ class SmartDevice(object):
         Sets the device name aka alias.
 
         :param alias: New alias (name)
-        :raises SmartPlugException: on error
+        :raises SmartDeviceException: on error
         """
         self._query_helper("system", "set_dev_alias", {"alias": alias})
 
@@ -179,7 +179,7 @@ class SmartDevice(object):
 
         :return: icon and its hash
         :rtype: dict
-        :raises SmartPlugException: on error
+        :raises SmartDeviceException: on error
         """
         return self._query_helper("system", "get_dev_icon")
 
@@ -205,7 +205,7 @@ class SmartDevice(object):
 
         :return: datetime for device's time
         :rtype: datetime.datetime
-        :raises SmartPlugException: on error
+        :raises SmartDeviceException: on error
         """
         res = self._query_helper("time", "get_time")
         return datetime.datetime(res["year"], res["month"], res["mday"],
@@ -221,7 +221,7 @@ class SmartDevice(object):
         :return: result
         :type: dict
         :raises NotImplemented: when not implemented.
-        :raises SmartPlugException: on error
+        :raises SmartDeviceException: on error
         """
         raise NotImplementedError("Fails with err_code == 0 with HS110.")
         """
@@ -252,7 +252,7 @@ class SmartDevice(object):
 
         :return: Timezone information
         :rtype: dict
-        :raises SmartPlugException: on error
+        :raises SmartDeviceException: on error
         """
         return self._query_helper("time", "get_timezone")
 
@@ -317,7 +317,7 @@ class SmartDevice(object):
         Sets new mac address
 
         :param str mac: mac in hexadecimal with colons, e.g. 01:23:45:67:89:ab
-        :raises SmartPlugException: on error
+        :raises SmartDeviceException: on error
         """
         self._query_helper("system", "set_mac_addr", {"mac": mac})
 
@@ -328,7 +328,7 @@ class SmartDevice(object):
         :returns: current readings or False
         :rtype: dict, False
                   False if device has no energy meter or error occured
-        :raises SmartPlugException: on error
+        :raises SmartDeviceException: on error
         """
         if not self.has_emeter:
             return False
@@ -345,7 +345,7 @@ class SmartDevice(object):
         :return: mapping of day of month to value
                  False if device has no energy meter or error occured
         :rtype: dict
-        :raises SmartPlugException: on error
+        :raises SmartDeviceException: on error
         """
         if not self.has_emeter:
             return False
@@ -374,7 +374,7 @@ class SmartDevice(object):
         :return: dict: mapping of month to value
                  False if device has no energy meter
         :rtype: dict
-        :raises SmartPlugException: on error
+        :raises SmartDeviceException: on error
         """
         if not self.has_emeter:
             return False
@@ -397,7 +397,7 @@ class SmartDevice(object):
         :return: True if statistics were deleted
                  False if device has no energy meter.
         :rtype: bool
-        :raises SmartPlugException: on error
+        :raises SmartDeviceException: on error
         """
         if not self.has_emeter:
             return False
@@ -414,7 +414,7 @@ class SmartDevice(object):
 
         :return: the current power consumption in Watt.
                  False if device has no energy meter.
-        :raises SmartPlugException: on error
+        :raises SmartDeviceException: on error
         """
         if not self.has_emeter:
             return False
