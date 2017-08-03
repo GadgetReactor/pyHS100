@@ -1,4 +1,4 @@
-from .pyHS100 import SmartDevice
+from pyHS100 import SmartDevice
 
 
 class SmartBulb(SmartDevice):

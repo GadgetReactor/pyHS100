@@ -466,3 +466,7 @@ class SmartDevice(object):
         :rtype: dict
         """
         raise NotImplementedError("Device subclass needs to implement this.")
+
+    def __repr__(self):
+        return "<%s at %s: %s>" % (self.__class__.__name__,
+                                 self.ip_address, self.identify())
