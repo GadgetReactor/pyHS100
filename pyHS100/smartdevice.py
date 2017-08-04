@@ -312,7 +312,15 @@ class SmartDevice(object):
         :return: mac address in hexadecimal with colons, e.g. 01:23:45:67:89:ab
         :rtype: str
         """
-        return self.sys_info["mac"]
+        info = self.sys_info
+
+        if 'mac' in info:
+            return info["mac"]
+        elif 'mic_mac' in info:
+            return info['mic_mac']
+        else:
+            raise SmartDeviceException("Unknown mac, please submit a bug"
+                                       "with sysinfo output.")
 
     @mac.setter
     def mac(self, mac):
