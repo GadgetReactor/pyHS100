@@ -267,9 +267,9 @@ class SmartDevice(object):
         :return: Information about hardware
         :rtype: dict
         """
-        keys = ["sw_ver", "hw_ver", "mac", "hwId", "fwId", "oemId", "dev_name"]
+        keys = ["sw_ver", "hw_ver", "mac", "mic_mac", "type", "mic_type", "hwId", "fwId", "oemId", "dev_name"]
         info = self.sys_info
-        return {key: info[key] for key in keys}
+        return {key: info[key] for key in keys if key in info}
 
     @property
     def location(self):
