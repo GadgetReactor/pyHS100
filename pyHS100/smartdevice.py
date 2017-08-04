@@ -204,12 +204,15 @@ class SmartDevice(object):
         Returns current time from the device.
 
         :return: datetime for device's time
-        :rtype: datetime.datetime
+        :rtype: datetime.datetime or None when not available
         :raises SmartDeviceException: on error
         """
-        res = self._query_helper("time", "get_time")
-        return datetime.datetime(res["year"], res["month"], res["mday"],
-                                 res["hour"], res["min"], res["sec"])
+        try:
+            res = self._query_helper("time", "get_time")
+            return datetime.datetime(res["year"], res["month"], res["mday"],
+                                     res["hour"], res["min"], res["sec"])
+        except SmartDeviceException:
+            return None
 
     @time.setter
     def time(self, ts):
