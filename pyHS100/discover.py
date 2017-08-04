@@ -56,10 +56,9 @@ class Discover:
                         _LOGGER.error("Unable to find the device type field!")
                         type = "UNKNOWN"
                 else:
-                    _LOGGER.error("Response does not contain 'system' or 'get_sysinfo'")
+                    _LOGGER.error("No 'system' nor 'get_sysinfo' in response")
                 if "smartplug" in type.lower():
                     devices[ip] = SmartPlug(ip)
-                    #devices.append({"ip": ip, "port": port, "sys_info": info, "type": type})
                 elif "smartbulb" in type.lower():
                     devices[ip] = SmartBulb(ip)
         except socket.timeout:

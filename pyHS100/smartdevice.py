@@ -35,7 +35,6 @@ class SmartDevice(object):
         Create a new SmartDevice instance, identified through its IP address.
 
         :param str ip_address: ip address on which the device listens
-        :raises SmartDeviceException: when unable to communicate with the device
         """
         socket.inet_pton(socket.AF_INET, ip_address)
         self.ip_address = ip_address
@@ -267,7 +266,8 @@ class SmartDevice(object):
         :return: Information about hardware
         :rtype: dict
         """
-        keys = ["sw_ver", "hw_ver", "mac", "mic_mac", "type", "mic_type", "hwId", "fwId", "oemId", "dev_name"]
+        keys = ["sw_ver", "hw_ver", "mac", "mic_mac", "type",
+                "mic_type", "hwId", "fwId", "oemId", "dev_name"]
         info = self.sys_info
         return {key: info[key] for key in keys if key in info}
 
@@ -480,4 +480,4 @@ class SmartDevice(object):
 
     def __repr__(self):
         return "<%s at %s: %s>" % (self.__class__.__name__,
-                                 self.ip_address, self.identify())
+                                   self.ip_address, self.identify())

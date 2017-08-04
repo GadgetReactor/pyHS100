@@ -32,7 +32,7 @@ def cli(ctx, ip, debug, bulb, plug):
         return
 
     if ip is None:
-        click.echo("No IP given, discovering and fetching status from all devices.")
+        click.echo("No IP given, trying discovery..")
         ctx.invoke(discover)
         return
 
@@ -49,7 +49,7 @@ def cli(ctx, ip, debug, bulb, plug):
         elif plug:
             dev = SmartPlug(ip)
         else:
-            click.echo("Error, unknown device, please define either --bulb or --plug!")
+            click.echo("Unable to detect type, use --bulb or --plug!")
             return
         ctx.obj = dev
 
