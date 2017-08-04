@@ -50,7 +50,7 @@ class Discover:
                     sysinfo = info["system"]["get_sysinfo"]
                     if "type" in sysinfo:
                         type = sysinfo["type"]
-                    elif "mic_type" in info:
+                    elif "mic_type" in sysinfo:
                         type = sysinfo["mic_type"]
                     else:
                         _LOGGER.error("Unable to find the device type field!")
