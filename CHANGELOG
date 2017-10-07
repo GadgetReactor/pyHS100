@@ -23,8 +23,47 @@ Other changes:
        - Supported switches: HS200
        - Supported bulbs: LB100, LB110, LB120, LB130
 
+- Bump the version. [Teemu Rytilahti]
 
 - Revise README, fixes #86. [Teemu Rytilahti]
+
+- Update the changelog. [Teemu Rytilahti]
+
+- Local test clean (#96) [Sean Gollschewsky]
+
+  * Add ignores for working coverage/tox/IDE files.
+
+  * Allow tox not to fail if python version is not available.
+
+- Move SmartDeviceException to SmartDevice, and remove types.py complet…
+  (#95) [Teemu R]
+
+  * move SmartDeviceException to SmartDevice, and remove types.py completely. fixes #94
+
+  * do not import skipIf anymore
+
+- Move has_emeter implementation from SmartDevice to SmartPlug, avoid
+  using features() internally (#93) [Teemu R]
+
+  * move has_emeter implementation from SmartDevice to SmartPlug, avoid using features() internally
+
+  * add stacklevel to deprecation warnings to see where they are really called
+
+  * make tests pass on a real device. if PLUG_IP is not None, the tests will be run on a device at the defined IP address
+
+- Add typing hints to make it easier for 3rd party developers to use the
+  library (#90) [Teemu R]
+
+  * add typing hints to make it easier for 3rd party developers to use the library
+
+  * remove unused devicetype enum to support python3.3
+
+  * add python 3.3 to travis and tox, install typing module in setup.py
+- Execute coveralls only on travis, fixes #84 (#91) [Teemu R]
+
+- Make flake8 pass by some rewording. [Teemu Rytilahti]
+
+- Make hound a bit more happier. [Teemu Rytilahti]
 
 - Deprecate features and identify, use state_information in __repr__ instead of identify. [Teemu Rytilahti]
 
@@ -111,7 +150,6 @@ Other changes:
   * drop python2 compatibility, make flake8 happy
 
   * travis: remove 2.7, add 3.6
-
 
 0.2.4.2 (2017-04-08)
 --------------------
