@@ -112,21 +112,25 @@ class SmartBulb(SmartDevice):
         return hue, saturation, value
 
     @hsv.setter
-    def hsv(self, state: Tuple[int, int, int]):
+    def hsv(self, state: Tuple[int, int, int, int]):
         """
         Sets new HSV, if supported
 
-        :param tuple state: hue, saturation and value (degrees, %, %)
+        :param tuple state: hue, saturation, value and period (degrees, %, %, milliseconds)
         """
         if not self.is_color:
             return None
-
+        if(len(state)<=3):
+            period = 500
+        else:
+            period = state[3]
         light_state = {
             "hue": state[0],
             "saturation": state[1],
             "brightness": int(state[2] * 100 / 255),
-            "color_temp": 0
-            }
+            "color_temp": 0,
+            "transition_period":period
+        }
         self.set_light_state(light_state)
 
     @property

@@ -16,7 +16,6 @@ from pyHS100 import (SmartDevice,
 
 pass_dev = click.make_pass_decorator(SmartDevice)
 
-
 @click.group(invoke_without_command=True)
 @click.option('--ip', envvar="PYHS100_IP", required=False)
 @click.option('--debug/--normal', default=False)
@@ -165,14 +164,15 @@ def temperature(dev, temperature):
 @click.argument("h", type=click.IntRange(0, 360), default=None)
 @click.argument("s", type=click.IntRange(0, 100), default=None)
 @click.argument("v", type=click.IntRange(0, 100), default=None)
+@click.argument("period", type=click.IntRange(0, 10000), default=500)
 @pass_dev
-def hsv(dev, h, s, v):
+def hsv(dev, h, s, v, period):
     """Get or set color in HSV. (Bulb only)"""
     if h is None or s is None or v is None:
         click.echo("Current HSV: %s" % dev.hsv)
     else:
         click.echo("Setting HSV: %s %s %s" % (h, s, v))
-        dev.hsv = (h, s, v)
+        dev.hsv = (h, s, v, period)
 
 
 @cli.command()

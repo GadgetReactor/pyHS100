@@ -95,7 +95,7 @@ Turning led to True
 
 ## Bulb-specific commands
 
-At the moment setting brightness, color temperature and color (in HSV) is supported.
+At the moment setting brightness, color temperature and color (in HSV) is supported. You can also set transition period for instant or smooth fades
 The commands are straightforward, so feel free to check `--help` for instructions how to use them.
 
 **Feel free to submit patches as pull requests to add more functionality (e.g. scenes)!**
@@ -204,10 +204,10 @@ if bulb.is_variable_color_temp:
 
 ### Setting the color
 
-Hue is given in degrees (0-360) and saturation and value in percentage.
+Hue is given in degrees (0-360) and saturation and value in percentage. You can also add optional, fourth parameter - transition period (in milliseconds)
 
 ```python
 print(bulb.hsv)
 if bulb.is_color:
-   bulb.hsv = (180, 100, 100) # set to cyan
+   bulb.hsv = (180, 100, 100, 1000) # set to cyan, fade 1 second
 ```
