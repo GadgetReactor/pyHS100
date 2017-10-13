@@ -1,12 +1,12 @@
 ####################################################
-# Use python 2.x and the latest version of alpine  #
+# Use python 3.x and the latest version of alpine  #
 ####################################################
 FROM python:3-alpine
 
 LABEL maintainer=peter@grainger.xyz
 
 ###################################################
-# Add a compiler                                  #
+# Add all system packages relied upon by python   #
 ###################################################
 RUN apk update && \
     apk add --no-cache gcc \
@@ -30,7 +30,7 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 ###################################################
-# Install dev dependancies                         #
+# Install dev dependancies                        #
 ###################################################
 RUN pip install pytest pytest-cov voluptuous typing
 
@@ -45,6 +45,6 @@ COPY ./ ./
 RUN python setup.py install
 
 ###################################################
-# Run tests                                         #
+# Run tests                                       #
 ###################################################
 CMD pytest

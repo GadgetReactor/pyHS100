@@ -216,11 +216,9 @@ if bulb.is_color:
 
 ### Docker
 
-Install Docker for your system [Docker for Mac](https://docs.docker.com/docker-for-mac/), [Docker for Windows](https://docs.docker.com/docker-for-windows/), [Docker for Linux](https://docs.docker.com/engine/installation/#server)
+The following assumes you have a working installation of Docker.
 
-#### Build and run
-
-This command will set up the environment and run the tests on demand.
+Set up the environment and run the tests on demand.
 
 replace `/absolute/path/to/root/of/directory` after the -v flag below with the absolute path to the directory this project is stored in e.g. `/home/bob.smith/pyHS100`
 
