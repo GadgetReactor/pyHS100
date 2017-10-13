@@ -220,8 +220,6 @@ The following assumes you have a working installation of Docker.
 
 Set up the environment and run the tests on demand.
 
-replace `/absolute/path/to/root/of/directory` after the -v flag below with the absolute path to the directory this project is stored in e.g. `/home/bob.smith/pyHS100`
-
 ```shell
-docker build . -t pyhs100 && docker run -v /absolute/path/to/root/of/directory/pyHS100/tests:/opt/pyHS100/pyHS100/tests  pyhs100 pytest
+docker build . -t pyhs100 && docker run -v $(PWD)/pyHS100/tests:/opt/pyHS100/pyHS100/tests  pyhs100 pytest
 ```
