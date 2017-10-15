@@ -49,7 +49,7 @@ class SmartDevice(SmartDeviceSingletonBase):
 
         :param str ip_address: ip address on which the device listens
         """
-        super(SmartDevice, self).__init__(ip_address, protocol)
+        super(SmartDevice, self).__init__()
         socket.inet_pton(socket.AF_INET, ip_address)
         self.ip_address = ip_address
         if not protocol:
