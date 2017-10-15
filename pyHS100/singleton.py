@@ -2,12 +2,12 @@
 class ArgsSingleton(type):
     """
     A metaclass which permits only a single instance of each derived class
-    sharing the same _class_name for any given set of positional 
-    arguments.
+     sharing the same _class_name for any given set of positional
+     arguments.
 
     Attempts to instantiate a second instance of a derived class, or another
-    class with the same _class_name, with the same args will return the
-    existing instance.
+     class with the same _class_name, with the same args will return the
+     existing instance.
     """
     _instances = {}
 
