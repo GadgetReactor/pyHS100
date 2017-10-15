@@ -19,6 +19,7 @@ import socket
 import warnings
 from collections import defaultdict
 from typing import Any, Dict, List, Tuple, Optional
+from pyHS100.singleton import SmartDeviceSingletonBase
 
 from .protocol import TPLinkSmartHomeProtocol
 
@@ -32,7 +33,8 @@ class SmartDeviceException(Exception):
     pass
 
 
-class SmartDevice(object):
+class SmartDevice(SmartDeviceSingletonBase):
+    _class_name = 'SmartDevice'
     # possible device features
     FEATURE_ENERGY_METER = 'ENE'
     FEATURE_TIMER = 'TIM'
@@ -47,6 +49,7 @@ class SmartDevice(object):
 
         :param str ip_address: ip address on which the device listens
         """
+        super(SmartDevice, self).__init__(ip_address, protocol)
         socket.inet_pton(socket.AF_INET, ip_address)
         self.ip_address = ip_address
         if not protocol:
