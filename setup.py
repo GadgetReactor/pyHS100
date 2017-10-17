@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(name='pyHS100',
       version='0.3.0',
-      description='Interface for TPLink HS100 Smart Plugs.',
+      description='Interface for TPLink\'s smart devices (HSxxx plugs & LBxxx bulbs)',
       url='https://github.com/GadgetReactor/pyHS100',
       author='Sean Seah (GadgetReactor)',
       author_email='sean@gadgetreactor.com',
