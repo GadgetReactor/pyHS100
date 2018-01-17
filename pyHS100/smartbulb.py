@@ -37,6 +37,7 @@ class SmartBulb(SmartDevice):
     and should be handled by the user of the library.
 
     """
+    _class_name = 'SmartBulb'
     # bulb states
     BULB_STATE_ON = 'ON'
     BULB_STATE_OFF = 'OFF'

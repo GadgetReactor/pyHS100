@@ -26,6 +26,7 @@ class SmartPlug(SmartDevice):
     Note:
     The library references the same structure as defined for the D-Link Switch
     """
+    _class_name = 'SmartPlug'
     # switch states
     SWITCH_STATE_ON = 'ON'
     SWITCH_STATE_OFF = 'OFF'
