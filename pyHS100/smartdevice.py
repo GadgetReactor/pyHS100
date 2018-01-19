@@ -32,6 +32,37 @@ class SmartDeviceException(Exception):
     pass
 
 
+class EmeterStatus(dict):
+    """Container for converting different representations of emeter data.
+
+    Newer FW/HW versions postfix the variable names with the used units,
+    where-as the olders do not have this feature.
+
+    This class automatically converts between these two to allow
+    backwards and forwards compatibility.
+    """
+
+    def __getitem__(self, item):
+        valid_keys = ['voltage_mv', 'power_mw', 'current_ma', 'total_wh',
+                      'voltage', 'power', 'current', 'total']
+        if item not in valid_keys:
+            raise KeyError(item)
+
+        # 1. if requested data is available, return it
+        if item in super().keys():
+            return super().__getitem__(item)
+        # otherwise decide how to convert it
+        else:
+            if '_' in item: # upscale
+                return super().__getitem__(item[:item.find('_')]) * 10**3
+            else: # downscale
+                for i in super().keys():
+                    if i.startswith(item):
+                        return self.__getitem__(i) / 10**3
+
+                raise Exception("Unable to find a value to convert to '%s'" % item)
+
+
 class SmartDevice(object):
     # possible device features
     FEATURE_ENERGY_METER = 'ENE'
@@ -380,7 +411,7 @@ class SmartDevice(object):
         if not self.has_emeter:
             return None
 
-        return self._query_helper(self.emeter_type, "get_realtime")
+        return EmeterStatus(self._query_helper(self.emeter_type, "get_realtime"))
 
     def get_emeter_daily(self,
                          year: int = None,
