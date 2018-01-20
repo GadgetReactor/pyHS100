@@ -53,14 +53,15 @@ class EmeterStatus(dict):
             return super().__getitem__(item)
         # otherwise decide how to convert it
         else:
-            if '_' in item: # upscale
+            if '_' in item:  # upscale
                 return super().__getitem__(item[:item.find('_')]) * 10**3
-            else: # downscale
+            else:  # downscale
                 for i in super().keys():
                     if i.startswith(item):
                         return self.__getitem__(i) / 10**3
 
-                raise Exception("Unable to find a value to convert to '%s'" % item)
+                raise SmartDeviceException("Unable to find a value for '%s'" %
+                                           item)
 
 
 class SmartDevice(object):
@@ -411,7 +412,8 @@ class SmartDevice(object):
         if not self.has_emeter:
             return None
 
-        return EmeterStatus(self._query_helper(self.emeter_type, "get_realtime"))
+        return EmeterStatus(self._query_helper(self.emeter_type,
+                                               "get_realtime"))
 
     def get_emeter_daily(self,
                          year: int = None,
