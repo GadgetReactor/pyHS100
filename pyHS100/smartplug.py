@@ -85,8 +85,8 @@ class SmartPlug(SmartDevice):
         """
         Current brightness of the device, if supported
 
-        :returns: integer 
-        :rtype: int 
+        :returns: integer
+        :rtype: int
         
         """
         if not self.is_dimmable:
@@ -104,13 +104,14 @@ class SmartPlug(SmartDevice):
         """
         if not self.is_dimmable:
             return None
-        
+
         if not isinstance(value, int):
             raise ValueError("Brightness must be integer, not of %s.", type(value))
         elif value > 0 and value <= 100:
             self.turn_on()
-            self._query_helper("smartlife.iot.dimmer", "set_brightness", {"brightness": value})
-        else:
+            self._query_helper("smartlife.iot.dimmer", "set_brightness",
+                              {"brightness": value})
+        else:	
             raise ValueError("Brightness value %s is not valid.", value)
     
     @property
@@ -120,10 +121,11 @@ class SmartPlug(SmartDevice):
 
         :return: True if the switch supports brightness changes, False otherwise
         :rtype: bool
+        
         """
         dimmable = False
         if "brightness" in self.sys_info:
-          dimmable = True 
+            dimmable = True
         return dimmable
 
     @property
@@ -198,4 +200,3 @@ class SmartPlug(SmartDevice):
             'LED state': self.led,
             'On since': self.on_since
         }
-
