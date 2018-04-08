@@ -110,18 +110,18 @@ class SmartPlug(SmartDevice):
         elif value > 0 and value <= 100:
             self.turn_on()
             self._query_helper("smartlife.iot.dimmer", "set_brightness",
-                              {"brightness": value})
-        else:	
+                               {"brightness": value})
+        else:
             raise ValueError("Brightness value %s is not valid.", value)
-    
+
     @property
     def is_dimmable(self):
         """
         Whether the switch supports brightness changes
 
-        :return: True if the switch supports brightness changes, False otherwise
+        :return: True if switch supports brightness changes, False otherwise
         :rtype: bool
-        
+
         """
         dimmable = False
         if "brightness" in self.sys_info:
