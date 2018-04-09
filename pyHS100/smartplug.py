@@ -83,7 +83,8 @@ class SmartPlug(SmartDevice):
     @property
     def brightness(self) -> Optional[int]:
         """
-        Current brightness of the device, if supported
+        Current brightness of the device, if supported.
+        Will return a a range between 0 - 100.
 
         :returns: integer
         :rtype: int
@@ -97,8 +98,12 @@ class SmartPlug(SmartDevice):
     @brightness.setter
     def brightness(self, value: int):
         """
-        Set the new switch brightness level
+        Set the new switch brightness level.
 
+        Note:
+        When setting brightness, if the light is not
+        already on, it will be turned on automatically.
+        
         :param value: integer between 1 and 100
         
         """
