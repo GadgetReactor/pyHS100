@@ -82,18 +82,9 @@ Current state: {'total': 133.105, 'power': 108.223577, 'current': 0.54463, 'volt
 
 ## Plug-specific commands
 
-At the moment only switching the state of the LED is implemented.
+At the moment switching LED state and brightness (for dimmable switches) is suported.
+
 **Feel free to submit patches as pull requests for further features!**
-### Controlling the LED
-
-`led` command can be used to control whether the LED light on front of the plug is on or off.
-
-```
-$ pyhs100 --plug led
-LED state: False
-$ pyhs100 --plug led 1
-Turning led to True
-```
 
 ## Bulb-specific commands
 
@@ -174,6 +165,17 @@ print("Per month: %s" % plug.get_emeter_monthly(year=2016))
 ```
 
 ## Plug-specific API
+
+### Controlling the LED
+
+`led` command can be used to control whether the LED light on front of the plug is on or off.
+
+```
+$ pyhs100 --plug led
+LED state: False
+$ pyhs100 --plug led 1
+Turning led to True
+```
 
 ### Switching the led (plugs only)
 ```python
