@@ -15,6 +15,7 @@ Python Library to control TPLink smart plugs/switches and smart bulbs.
 * Wall switches
   * HS200
   * HS210
+  * HS220 (dimmable)  
 * Bulbs
   * LB100
   * LB110
@@ -172,13 +173,23 @@ print("Per day: %s" % plug.get_emeter_daily(year=2016, month=12))
 print("Per month: %s" % plug.get_emeter_monthly(year=2016))
 ```
 
-## Plug-specific
+## Plug-specific API
 
 ### Switching the led (plugs only)
 ```python
 print("Current LED state: %s" % plug.led)
 plug.led = False # turn off led
 print("New LED state: %s" % plug.led)
+```
+
+### Setting the brightness for dimmable switches
+
+The `brightness` property works in percentages.
+
+```python
+print(plug.brightness)
+if plug.is_dimmable:
+    plug.brightness = 100
 ```
 
 ## Bulb-specific API
