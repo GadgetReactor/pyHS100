@@ -24,11 +24,14 @@ pass_dev = click.make_pass_decorator(SmartDevice)
               'instead.')
 @click.option('--host', envvar="PYHS100_HOST", required=False,
               help='The host name or IP address of the device to connect to.')
+@click.option('--devicename', envvar="PYHS100_NAME", required=False,
+              help='The device name of the device to connect to.')
+
 @click.option('--debug/--normal', default=False)
 @click.option('--bulb', default=False, is_flag=True)
 @click.option('--plug', default=False, is_flag=True)
 @click.pass_context
-def cli(ctx, ip, host, debug, bulb, plug):
+def cli(ctx, ip, host, devicename, debug, bulb, plug):
     """A cli tool for controlling TP-Link smart home plugs."""
     if debug:
         logging.basicConfig(level=logging.DEBUG)
@@ -41,11 +44,17 @@ def cli(ctx, ip, host, debug, bulb, plug):
     if ip is not None and host is None:
         host = ip
 
+    if devicename is not None and host is None:
+        click.echo("Device name is given, using discovery to find host %s" %
+                   devicename)
+        host = ctx.invoke(find_host_from_device_name, devicename=devicename)
+        print("Found hostname is {}".format(host))
+
+
     if host is None:
         click.echo("No host name given, trying discovery..")
         ctx.invoke(discover)
         return
-
     else:
         if not bulb and not plug:
             click.echo("No --bulb nor --plug given, discovering..")
@@ -79,6 +88,25 @@ def discover(ctx, timeout, discover_only):
 
     return found_devs
 
+
+@cli.command()
+@click.option('--timeout', default=3, required=False)
+@click.option('--attempts', default=10, required=False)
+@click.option('--devicename', required=True)
+@click.pass_context
+def find_host_from_device_name(ctx, timeout, attempts, devicename):
+    """Discover devices in the network."""
+    host = None
+    click.echo("Trying to discover %s using %s attempts of %s seconds" %
+               (devicename, attempts, timeout))
+    for attempt in range(1, attempts):
+        print("Attempt %s of %s" % (attempt, attempts))
+        found_devs = Discover.discover(timeout=timeout).items()
+        for ip, dev in found_devs:
+            if dev.alias.lower() == devicename.lower():
+                host = dev.host
+                return host
+    return None
 
 @cli.command()
 @pass_dev
