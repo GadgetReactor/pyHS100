@@ -122,6 +122,8 @@ class SmartBulb(SmartDevice):
             return None
 
         light_state = {
+            "on_off": 1,
+            "ignore_default": 1,
             "hue": state[0],
             "saturation": state[1],
             "brightness": int(state[2] * 100 / 255),
@@ -157,6 +159,8 @@ class SmartBulb(SmartDevice):
             return None
 
         light_state = {
+            "on_off": 1,
+            "ignore_default": 1,
             "color_temp": temp,
         }
         self.set_light_state(light_state)
@@ -189,6 +193,8 @@ class SmartBulb(SmartDevice):
             return None
 
         light_state = {
+            "on_off": 1,
+            "ignore_default": 1,
             "brightness": brightness,
         }
         self.set_light_state(light_state)
