@@ -216,7 +216,6 @@ class TestSmartPlugHS100(TestCase):
         else:
             self.assertEqual(self.plug.current_consumption(), None)
 
-
     def test_alias(self):
         test_alias = "TEST1234"
         original = self.plug.alias
@@ -273,6 +272,24 @@ class TestSmartPlugHS110(TestSmartPlugHS100):
         self.assertAlmostEqual(emeter["current"] * 10**3, emeter["current_ma"])
         self.assertAlmostEqual(emeter["total"] * 10**3, emeter["total_wh"])
 
+    def test_emeter_daily_upcast(self):
+        emeter = self.plug.get_emeter_daily()
+        _, v = emeter.popitem()
+
+        emeter = self.plug.get_emeter_daily(kwh=False)
+        _, v2 = emeter.popitem()
+
+        self.assertAlmostEqual(v * 10**3, v2)
+
+    def test_get_emeter_monthly_upcast(self):
+        emeter = self.plug.get_emeter_monthly()
+        _, v = emeter.popitem()
+
+        emeter = self.plug.get_emeter_monthly(kwh=False)
+        _, v2 = emeter.popitem()
+
+        self.assertAlmostEqual(v * 10**3, v2)
+
 
 class TestSmartPlugHS110_HW2(TestSmartPlugHS100):
     SYSINFO = sysinfo_hs110_au_v2
@@ -283,6 +300,24 @@ class TestSmartPlugHS110_HW2(TestSmartPlugHS100):
         self.assertAlmostEqual(emeter["voltage"], emeter["voltage_mv"] / 10**3)
         self.assertAlmostEqual(emeter["current"], emeter["current_ma"] / 10**3)
         self.assertAlmostEqual(emeter["total"], emeter["total_wh"] / 10**3)
+
+    def test_emeter_daily_downcast(self):
+        emeter = self.plug.get_emeter_daily()
+        _, v = emeter.popitem()
+
+        emeter = self.plug.get_emeter_daily(kwh=False)
+        _, v2 = emeter.popitem()
+
+        self.assertAlmostEqual(v * 10**3, v2)
+
+    def test_get_emeter_monthly_downcast(self):
+        emeter = self.plug.get_emeter_monthly()
+        _, v = emeter.popitem()
+
+        emeter = self.plug.get_emeter_monthly(kwh=False)
+        _, v2 = emeter.popitem()
+
+        self.assertAlmostEqual(v * 10**3, v2)
 
 
 class TestSmartPlugHS200(TestSmartPlugHS100):
