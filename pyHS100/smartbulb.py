@@ -124,11 +124,11 @@ class SmartBulb(SmartDevice):
         if not self.is_on:
             hue = light_state['dft_on_state']['hue']
             saturation = light_state['dft_on_state']['saturation']
-            value = int(light_state['dft_on_state']['brightness'] * 255 / 100)
+            value = light_state['dft_on_state']['brightness']
         else:
             hue = light_state['hue']
             saturation = light_state['saturation']
-            value = int(light_state['brightness'] * 255 / 100)
+            value = light_state['brightness']
 
         return hue, saturation, value
 
