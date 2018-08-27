@@ -81,7 +81,7 @@ def discover(ctx, timeout, discover_only):
     click.echo("Discovering devices for %s seconds" % timeout)
     found_devs = Discover.discover(timeout=timeout).items()
     if not discover_only:
-        for ip, dev in found_devs:
+        for _, dev in found_devs:
             ctx.obj = dev
             ctx.invoke(state)
             print()
@@ -102,7 +102,7 @@ def find_host_from_device_name(ctx, timeout, attempts, devicename):
     for attempt in range(1, attempts):
         print("Attempt %s of %s" % (attempt, attempts))
         found_devs = Discover.discover(timeout=timeout).items()
-        for ip, dev in found_devs:
+        for _, dev in found_devs:
             if dev.alias.lower() == devicename.lower():
                 host = dev.host
                 return host
