@@ -1,8 +1,8 @@
 from setuptools import setup
 
 setup(name='pyHS100',
-      version='0.3.0',
-      description='Interface for TPLink HS100 Smart Plugs.',
+      version='0.3.2',
+      description='Interface for TPLink HS1xx plugs, HS2xx wall switches & LB1xx bulbs',
       url='https://github.com/GadgetReactor/pyHS100',
       author='Sean Seah (GadgetReactor)',
       author_email='sean@gadgetreactor.com',

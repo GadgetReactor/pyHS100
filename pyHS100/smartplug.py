@@ -36,7 +36,6 @@ class SmartPlug(SmartDevice):
                  protocol: 'TPLinkSmartHomeProtocol' = None) -> None:
         SmartDevice.__init__(self, host, protocol)
         self.emeter_type = "emeter"
-        self.emeter_units = False
 
     @property
     def state(self) -> str:
@@ -94,7 +93,7 @@ class SmartPlug(SmartDevice):
             return None
 
         return int(self.sys_info['brightness'])
-        
+
     @brightness.setter
     def brightness(self, value: int):
         """
@@ -111,7 +110,7 @@ class SmartPlug(SmartDevice):
             return None
 
         if not isinstance(value, int):
-            raise ValueError("Brightness must be integer, " 
+            raise ValueError("Brightness must be integer, "
                              "not of %s.", type(value))
         elif value > 0 and value <= 100:
             self.turn_on()

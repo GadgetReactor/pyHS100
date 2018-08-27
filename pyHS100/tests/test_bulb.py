@@ -156,17 +156,26 @@ class TestSmartBulb(TestCase):
     def test_get_emeter_daily(self):
         self.assertEqual(self.bulb.get_emeter_daily(year=1900, month=1), {})
 
-        k, v = self.bulb.get_emeter_daily().popitem()
+        k, v = self.bulb.get_emeter_daily(kwh=False).popitem()
         self.assertTrue(isinstance(k, int))
         self.assertTrue(isinstance(v, int))
+
+        k, v = self.bulb.get_emeter_daily(kwh=True).popitem()
+        self.assertTrue(isinstance(k, int))
+        self.assertTrue(isinstance(v, float))
 
     def test_get_emeter_monthly(self):
         self.assertEqual(self.bulb.get_emeter_monthly(year=1900), {})
 
-        d = self.bulb.get_emeter_monthly()
+        d = self.bulb.get_emeter_monthly(kwh=False)
         k, v = d.popitem()
         self.assertTrue(isinstance(k, int))
         self.assertTrue(isinstance(v, int))
+
+        d = self.bulb.get_emeter_monthly(kwh=True)
+        k, v = d.popitem()
+        self.assertTrue(isinstance(k, int))
+        self.assertTrue(isinstance(v, float))
 
     @skip("not clearing your stats..")
     def test_erase_emeter_stats(self):
@@ -191,6 +200,13 @@ class TestSmartBulb(TestCase):
 
     def test_rssi(self):
         self.sysinfo_schema({'rssi': self.bulb.rssi})  # wrapping for vol
+
+    def test_temperature_range(self):
+        self.assertEqual(self.bulb.valid_temperature_range, (2500, 9000))
+        with self.assertRaises(ValueError):
+            self.bulb.color_temp = 1000
+        with self.assertRaises(ValueError):
+            self.bulb.color_temp = 10000
 
 
 class TestSmartBulbLB100(TestSmartBulb):
