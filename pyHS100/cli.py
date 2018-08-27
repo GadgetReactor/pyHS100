@@ -47,7 +47,7 @@ def cli(ctx, ip, host, devicename, debug, bulb, plug):
     if devicename is not None and host is None:
         click.echo("Device name is given, using discovery to find host %s" %
                    devicename)
-        host = ctx.invoke(find_host_from_device_name, devicename=devicename)
+        host = find_host_from_device_name(devicename=devicename)
         print("Found hostname is {}".format(host))
 
 
@@ -89,13 +89,8 @@ def discover(ctx, timeout, discover_only):
     return found_devs
 
 
-@cli.command()
-@click.option('--timeout', default=3, required=False)
-@click.option('--attempts', default=10, required=False)
-@click.option('--devicename', required=True)
-@click.pass_context
-def find_host_from_device_name(ctx, timeout, attempts, devicename):
-    """Discover devices in the network."""
+def find_host_from_device_name(devicename, timeout=1, attempts=3):
+    """Discover a device identified by its devicename"""
     host = None
     click.echo("Trying to discover %s using %s attempts of %s seconds" %
                (devicename, attempts, timeout))
