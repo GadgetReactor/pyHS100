@@ -48,8 +48,7 @@ def cli(ctx, ip, host, alias, debug, bulb, plug):
         click.echo("Alias is given, using discovery to find host %s" %
                    alias)
         host = find_host_from_alias(alias=alias)
-        print("Found hostname is {}".format(host))
-
+        click.echo("Found hostname is {}".format(host))
 
     if host is None:
         click.echo("No host name given, trying discovery..")
@@ -81,7 +80,7 @@ def discover(ctx, timeout, discover_only):
     click.echo("Discovering devices for %s seconds" % timeout)
     found_devs = Discover.discover(timeout=timeout).items()
     if not discover_only:
-        for _, dev in found_devs:
+        for ip, dev in found_devs:
             ctx.obj = dev
             ctx.invoke(state)
             print()
@@ -95,13 +94,14 @@ def find_host_from_alias(alias, timeout=1, attempts=3):
     click.echo("Trying to discover %s using %s attempts of %s seconds" %
                (alias, attempts, timeout))
     for attempt in range(1, attempts):
-        print("Attempt %s of %s" % (attempt, attempts))
+        click.echo("Attempt %s of %s" % (attempt, attempts))
         found_devs = Discover.discover(timeout=timeout).items()
-        for _, dev in found_devs:
+        for ip, dev in found_devs:
             if dev.alias.lower() == alias.lower():
                 host = dev.host
                 return host
     return None
+
 
 @cli.command()
 @pass_dev
