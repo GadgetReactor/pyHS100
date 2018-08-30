@@ -48,7 +48,11 @@ def cli(ctx, ip, host, alias, debug, bulb, plug):
         click.echo("Alias is given, using discovery to find host %s" %
                    alias)
         host = find_host_from_alias(alias=alias)
-        click.echo("Found hostname is {}".format(host))
+        if host:
+            click.echo("Found hostname is {}".format(host))
+        else:
+            click.echo("No device with name {} found".format(alias))
+            return
 
     if host is None:
         click.echo("No host name given, trying discovery..")
