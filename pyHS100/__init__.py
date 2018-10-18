@@ -15,6 +15,7 @@ to be handled by the user of the library.
 # flake8: noqa
 from .smartdevice import SmartDevice, SmartDeviceException
 from .smartplug import SmartPlug
+from .smartmultiplug import SmartMultiPlug
 from .smartbulb import SmartBulb
 from .protocol import TPLinkSmartHomeProtocol
 from .discover import Discover

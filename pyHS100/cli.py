@@ -11,6 +11,7 @@ if sys.version_info < (3, 4):
 
 from pyHS100 import (SmartDevice,
                      SmartPlug,
+                     SmartMultiPlug,
                      SmartBulb,
                      Discover)  # noqa: E402
 

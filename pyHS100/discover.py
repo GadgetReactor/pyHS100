@@ -3,7 +3,7 @@ import logging
 import json
 from typing import Dict, Type
 
-from pyHS100 import TPLinkSmartHomeProtocol, SmartDevice, SmartPlug, SmartBulb
+from pyHS100 import TPLinkSmartHomeProtocol, SmartDevice, SmartPlug, SmartMultiPlug, SmartBulb
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -52,6 +52,7 @@ class Discover:
                 ip, port = addr
                 info = json.loads(protocol.decrypt(data))
                 device_class = Discover._get_device_class(info)
+                print("device_class={}".format(device_class))
                 if device_class is not None:
                     devices[ip] = device_class(ip)
         except socket.timeout:
@@ -87,6 +88,8 @@ class Discover:
     @staticmethod
     def _get_device_class(info: dict) -> Type[SmartDevice]:
         """Find SmartDevice subclass for device described by passed data."""
+        print("got info: {}".format(info))
+        child_num = 0
         if "system" in info and "get_sysinfo" in info["system"]:
             sysinfo = info["system"]["get_sysinfo"]
             if "type" in sysinfo:
@@ -96,10 +99,16 @@ class Discover:
             else:
                 _LOGGER.error("Unable to find the device type field!")
                 type = "UNKNOWN"
+            if 'child_num' in sysinfo:
+                child_num = sysinfo['child_num']
         else:
             _LOGGER.error("No 'system' nor 'get_sysinfo' in response")
+        print("got type: {}".format(type))
         if "smartplug" in type.lower():
-            return SmartPlug
+            if child_num > 1:
+                return SmartMultiPlug
+            else:
+                return SmartPlug
         elif "smartbulb" in type.lower():
             return SmartBulb
 
