@@ -11,8 +11,8 @@ if sys.version_info < (3, 4):
 
 from pyHS100 import (SmartDevice,
                      SmartPlug,
-                     SmartMultiPlug,
                      SmartBulb,
+                     SmartStrip,
                      Discover)  # noqa: E402
 
 pass_dev = click.make_pass_decorator(SmartDevice)
@@ -31,8 +31,9 @@ pass_dev = click.make_pass_decorator(SmartDevice)
 @click.option('--debug/--normal', default=False)
 @click.option('--bulb', default=False, is_flag=True)
 @click.option('--plug', default=False, is_flag=True)
+@click.option('--strip', default=False, is_flag=True)
 @click.pass_context
-def cli(ctx, ip, host, alias, debug, bulb, plug):
+def cli(ctx, ip, host, alias, debug, bulb, plug, strip):
     """A cli tool for controlling TP-Link smart home plugs."""
     if debug:
         logging.basicConfig(level=logging.DEBUG)
@@ -60,15 +61,17 @@ def cli(ctx, ip, host, alias, debug, bulb, plug):
         ctx.invoke(discover)
         return
     else:
-        if not bulb and not plug:
-            click.echo("No --bulb nor --plug given, discovering..")
+        if not bulb and not plug and not strip:
+            click.echo("No --strip nor --bulb nor --plug given, discovering..")
             dev = Discover.discover_single(host)
         elif bulb:
             dev = SmartBulb(host)
         elif plug:
             dev = SmartPlug(host)
+        elif strip:
+            dev = SmartStrip(host)
         else:
-            click.echo("Unable to detect type, use --bulb or --plug!")
+            click.echo("Unable to detect type, use --strip or --bulb or --plug!")
             return
         ctx.obj = dev
 
@@ -150,15 +153,15 @@ def alias(dev, new_alias):
 
     click.echo("Alias: %s" % dev.alias)
 
-
 @cli.command()
 @pass_dev
+@click.argument('index', type=int, required=False)
 @click.option('--year', type=Datetime(format='%Y'),
               default=None, required=False)
 @click.option('--month', type=Datetime(format='%Y-%m'),
               default=None, required=False)
 @click.option('--erase', is_flag=True)
-def emeter(dev, year, month, erase):
+def emeter(dev, index, year, month, erase):
     """Query emeter for historical consumption."""
     click.echo(click.style("== Emeter ==", bold=True))
     if not dev.has_emeter:
@@ -170,7 +173,10 @@ def emeter(dev, year, month, erase):
         dev.erase_emeter_stats()
         return
 
-    click.echo("Current state: %s" % dev.get_emeter_realtime())
+    if index is None:
+        click.echo("Current state: %s" % dev.get_emeter_realtime())
+    else:
+        click.echo("Current state: %s" % dev.get_emeter_realtime(index))
     if year:
         click.echo("== For year %s ==" % year.year)
         click.echo(dev.get_emeter_monthly(year.year))
@@ -241,19 +247,27 @@ def time(dev):
 
 
 @cli.command()
+@click.argument('index', type=int, required=False)
 @pass_dev
-def on(plug):
+def on(plug, index):
     """Turn the device on."""
     click.echo("Turning on..")
-    plug.turn_on()
+    if index is None:
+        plug.turn_on()
+    else:
+        plug.turn_on_plug(index)
 
 
 @cli.command()
+@click.argument('index', type=int, required=False)
 @pass_dev
-def off(plug):
+def off(plug, index):
     """Turn the device off."""
     click.echo("Turning off..")
-    plug.turn_off()
+    if index is None:
+        plug.turn_off()
+    else:
+        plug.turn_off_plug(index)
 
 
 @cli.command()

@@ -35,7 +35,7 @@ class SmartPlug(SmartDevice):
                  host: str,
                  protocol: 'TPLinkSmartHomeProtocol' = None) -> None:
         SmartDevice.__init__(self, host, protocol)
-        self.emeter_type = "emeter"
+        self._type = "emeter"
 
     @property
     def state(self) -> str:

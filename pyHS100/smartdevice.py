@@ -89,23 +89,30 @@ class SmartDevice(object):
     def _query_helper(self,
                       target: str,
                       cmd: str,
-                      arg: Optional[Dict] = None) -> Any:
+                      arg: Optional[Dict] = None,
+                      child_id: str = None) -> Any:
         """
         Helper returning unwrapped result object and doing error handling.
 
         :param target: Target system {system, time, emeter, ..}
         :param cmd: Command to execute
         :param arg: JSON object passed as parameter to the command
+        :param child_id:  optional child ID for context
         :return: Unwrapped result for the call.
         :rtype: dict
         :raises SmartDeviceException: if command was not executed correctly
         """
+        if child_id is None:
+            request={target: {cmd: arg}}
+        else:
+            request={"context":{"child_ids":[child_id]}, target: {cmd: arg}}
+
         if arg is None:
             arg = {}
         try:
             response = self.protocol.query(
                 host=self.host,
-                request={target: {cmd: arg}}
+                request=request,
             )
         except Exception as ex:
             raise SmartDeviceException('Communication error') from ex
@@ -400,7 +407,7 @@ class SmartDevice(object):
         """
         self._query_helper("system", "set_mac_addr", {"mac": mac})
 
-    def get_emeter_realtime(self) -> Optional[Dict]:
+    def get_emeter_realtime(self, child_id: str = None) -> Optional[Dict]:
         """
         Retrive current energy readings from device.
 
@@ -413,7 +420,8 @@ class SmartDevice(object):
             return None
 
         return EmeterStatus(self._query_helper(self.emeter_type,
-                                               "get_realtime"))
+                                               "get_realtime",
+                                               child_id=child_id))
 
     def get_emeter_daily(self,
                          year: int = None,

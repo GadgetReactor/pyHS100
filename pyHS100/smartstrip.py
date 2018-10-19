@@ -7,11 +7,11 @@ from pyHS100 import SmartDevice
 _LOGGER = logging.getLogger(__name__)
 
 
-class SmartMultiPlug(SmartDevice):
-    """Representation of a TP-Link Smart Switch.
+class SmartStrip(SmartDevice):
+    """Representation of a TP-Link Smart Power Strip.
 
     Usage example when used as library:
-    p = SmartMultiPlug("192.168.1.105")
+    p = SmartStrip("192.168.1.105")
     # print the devices alias
     print(p.alias)
     # change state of plug
@@ -51,12 +51,12 @@ class SmartMultiPlug(SmartDevice):
         relay_state = self.sys_info['relay_state']
 
         if relay_state == 0:
-            return SmartMultiPlug.SWITCH_STATE_OFF
+            return SmartStrip.SWITCH_STATE_OFF
         elif relay_state == 1:
-            return SmartMultiPlug.SWITCH_STATE_ON
+            return SmartStrip.SWITCH_STATE_ON
         else:
             _LOGGER.warning("Unknown state %s returned.", relay_state)
-            return SmartMultiPlug.SWITCH_STATE_UNKNOWN
+            return SmartStrip.SWITCH_STATE_UNKNOWN
 
     @state.setter
     def state(self, value: str):
@@ -72,9 +72,9 @@ class SmartMultiPlug(SmartDevice):
         """
         if not isinstance(value, str):
             raise ValueError("State must be str, not of %s.", type(value))
-        elif value.upper() == SmartMultiPlug.SWITCH_STATE_ON:
+        elif value.upper() == SmartStrip.SWITCH_STATE_ON:
             self.turn_on()
-        elif value.upper() == SmartMultiPlug.SWITCH_STATE_OFF:
+        elif value.upper() == SmartStrip.SWITCH_STATE_OFF:
             self.turn_off()
         else:
             raise ValueError("State %s is not valid.", value)
@@ -96,12 +96,42 @@ class SmartMultiPlug(SmartDevice):
 
     @brightness.setter
     def brightness(self, value: int):
-        return None
+        """
+        Set the new switch brightness level.
+
+        Note:
+        When setting brightness, if the light is not
+        already on, it will be turned on automatically.
+
+        :param value: integer between 1 and 100
+
+        """
+        if not self.is_dimmable:
+            return None
+
+        if not isinstance(value, int):
+            raise ValueError("Brightness must be integer, "
+                             "not of %s.", type(value))
+        elif value > 0 and value <= 100:
+            self.turn_on()
+            self._query_helper("smartlife.iot.dimmer", "set_brightness",
+                               {"brightness": value})
+        else:
+            raise ValueError("Brightness value %s is not valid.", value)
 
     @property
     def is_dimmable(self):
+        """
+        Whether the switch supports brightness changes
 
-        return False
+        :return: True if switch supports brightness changes, False otherwise
+        :rtype: bool
+
+        """
+        dimmable = False
+        if "brightness" in self.sys_info:
+            dimmable = True
+        return dimmable
 
     @property
     def has_emeter(self):
@@ -113,18 +143,18 @@ class SmartMultiPlug(SmartDevice):
         features = self.sys_info['feature'].split(':')
         return SmartDevice.FEATURE_ENERGY_METER in features
 
-    @property
-    def is_on(self) -> bool:
+    def is_on(self, index: int) -> bool:
         """
         Returns whether device is on.
 
+        param index: plug index
         :return: True if device is on, False otherwise
         """
-        return bool(self.sys_info['relay_state'])
+        return bool(self.sys_info['children'][index]['state'])
 
     def turn_on(self):
         """
-        Turn the switch on.
+        Turn all outlets on
 
         :raises SmartDeviceException: on error
         """
@@ -132,11 +162,42 @@ class SmartMultiPlug(SmartDevice):
 
     def turn_off(self):
         """
-        Turn the switch off.
+        Turn all outlets off
 
         :raises SmartDeviceException: on error
         """
         self._query_helper("system", "set_relay_state", {"state": 0})
+
+    def turn_on_plug(self, index: int):
+        """
+        Turns a single outlet on.
+
+        param index: plug index
+        :raises SmartDeviceException: on error
+        """
+        self._query_helper("system", "set_relay_state", {"state": 1},
+                           self._index_to_id(index))
+
+    def turn_off_plug(self, index: int):
+        """
+        Turns a single outlet off.
+
+        :param index: plug index
+        :raises SmartDeviceException: on error
+        """
+        self._query_helper("system", "set_relay_state", {"state": 0},
+                           self._index_to_id(index))
+
+    def _index_to_id(self, index: int) -> str:
+        """
+        Returns the child ID for the given plug index
+
+        :param index: plug index (1 based, not zero based)
+        :raises SmartDeviceException: on error
+        :return: child ID string
+        :rtype: datetime
+        """
+        return self.sys_info["children"][index-1]["id"]
 
     @property
     def led(self) -> bool:
@@ -158,31 +219,48 @@ class SmartMultiPlug(SmartDevice):
         """
         self._query_helper("system", "set_led_off", {"off": int(not state)})
 
-    def on_since(self,idx):
+    def on_since(self, index: int) -> datetime.datetime:
         """
         Returns pretty-printed on-time
 
+        :param index: index index
         :return: datetime for on since
         :rtype: datetime
         """
-        id_info = self._get_idx_info(0)
         return datetime.datetime.now() - \
-            datetime.timedelta(seconds=id_info["on_time"])
-
-    def _get_idx_info(self,id):
-        """
-        Get the sys_info for the given child id
-        """
-        for info in self.sys_info["children"]:
-            # Each child id is the deviceId followed by the index
-            # so grab the last to chars of the id
-            if id == int(info['id'][-2:]):
-                return info
-        return None
+            datetime.timedelta(seconds= \
+            self.sys_info["children"][index]["on_time"])
 
     @property
     def state_information(self) -> Dict[str, Any]:
-        return {
-            'LED state': self.led,
-            'On since': self.on_since(0)
-        }
+        state = {'LED state': self.led}
+        for index in range(0, self.num_plugs):
+            state['Plug %d on since' % (index + 1)] = self.on_since(index)
+        return state
+
+    @property
+    def num_plugs(self) -> int:
+        """
+        Returns the number of plugs
+
+        :rtype: int
+        """
+        return self.sys_info["child_num"]
+
+    def get_emeter_realtime(self, index: int = None) -> Optional[Dict]:
+        """
+        Retrive current energy readings from device.
+
+        :returns: current readings or False
+        :rtype: dict, None
+                  None if device has no energy meter or error occured
+        :raises SmartDeviceException: on error
+        """
+        if not self.has_emeter:
+            return None
+        if index is None:
+            child_id = None
+        else:
+            child_id = self._index_to_id(index)
+        return super().get_emeter_realtime(child_id)
+
