@@ -170,23 +170,23 @@ class SmartStrip(SmartDevice):
 
     def turn_on_plug(self, index: int):
         """
-        Turn the switch on.
+        Turns a single outlet on.
 
         param index: plug index
         :raises SmartDeviceException: on error
         """
-        self._query_helper("system", "set_relay_state", {"state": 1}, self._index_to_id(index))
-        #self._raw_query({"context":{"child_ids":[self._index_to_id(index)]},"system":{"set_relay_state":{"state":1}}})
+        self._query_helper("system", "set_relay_state", {"state": 1},
+                           self._index_to_id(index))
 
     def turn_off_plug(self, index: int):
         """
-        Turn the switch off.
+        Turns a single outlet off.
 
         :param index: plug index
         :raises SmartDeviceException: on error
         """
-        self._query_helper("system", "set_relay_state", {"state": 0}, self._index_to_id(index))
-        #self._query_helper({"context":{"child_ids":[]},"system":{"set_relay_state":{"state":0}}})
+        self._query_helper("system", "set_relay_state", {"state": 0},
+                           self._index_to_id(index))
 
     def _index_to_id(self, index: int) -> str:
         """
