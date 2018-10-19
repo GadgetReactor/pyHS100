@@ -244,19 +244,27 @@ def time(dev):
 
 
 @cli.command()
+@click.argument('index', type=int, required=False)
 @pass_dev
-def on(plug):
+def on(plug, index):
     """Turn the device on."""
     click.echo("Turning on..")
-    plug.turn_on()
+    if index is None:
+        plug.turn_on()
+    else:
+        plug.turn_on_plug(index)
 
 
 @cli.command()
+@click.argument('index', type=int, required=False)
 @pass_dev
-def off(plug):
+def off(plug, index):
     """Turn the device off."""
     click.echo("Turning off..")
-    plug.turn_off()
+    if index is None:
+        plug.turn_off()
+    else:
+        plug.turn_off_plug(index)
 
 
 @cli.command()
