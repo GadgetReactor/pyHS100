@@ -16,5 +16,6 @@ to be handled by the user of the library.
 from .smartdevice import SmartDevice, SmartDeviceException
 from .smartplug import SmartPlug
 from .smartbulb import SmartBulb
+from .smartstrip import SmartStrip
 from .protocol import TPLinkSmartHomeProtocol
 from .discover import Discover

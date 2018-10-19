@@ -12,6 +12,7 @@ if sys.version_info < (3, 4):
 from pyHS100 import (SmartDevice,
                      SmartPlug,
                      SmartBulb,
+                     SmartStrip,
                      Discover)  # noqa: E402
 
 pass_dev = click.make_pass_decorator(SmartDevice)
@@ -30,8 +31,9 @@ pass_dev = click.make_pass_decorator(SmartDevice)
 @click.option('--debug/--normal', default=False)
 @click.option('--bulb', default=False, is_flag=True)
 @click.option('--plug', default=False, is_flag=True)
+@click.option('--strip', default=False, is_flag=True)
 @click.pass_context
-def cli(ctx, ip, host, alias, debug, bulb, plug):
+def cli(ctx, ip, host, alias, debug, bulb, plug, strip):
     """A cli tool for controlling TP-Link smart home plugs."""
     if debug:
         logging.basicConfig(level=logging.DEBUG)
@@ -59,15 +61,17 @@ def cli(ctx, ip, host, alias, debug, bulb, plug):
         ctx.invoke(discover)
         return
     else:
-        if not bulb and not plug:
-            click.echo("No --bulb nor --plug given, discovering..")
+        if not bulb and not plug and not strip:
+            click.echo("No --strip nor --bulb nor --plug given, discovering..")
             dev = Discover.discover_single(host)
         elif bulb:
             dev = SmartBulb(host)
         elif plug:
             dev = SmartPlug(host)
+        elif strip:
+            dev = SmartPowerStrip(host)
         else:
-            click.echo("Unable to detect type, use --bulb or --plug!")
+            click.echo("Unable to detect type, use --strip or --bulb or --plug!")
             return
         ctx.obj = dev
 

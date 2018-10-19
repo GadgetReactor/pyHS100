@@ -3,7 +3,7 @@ import logging
 import json
 from typing import Dict, Type
 
-from pyHS100 import TPLinkSmartHomeProtocol, SmartDevice, SmartPlug, SmartBulb
+from pyHS100 import TPLinkSmartHomeProtocol, SmartDevice, SmartPlug, SmartBulb, SmartStrip
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -98,7 +98,10 @@ class Discover:
                 type = "UNKNOWN"
         else:
             _LOGGER.error("No 'system' nor 'get_sysinfo' in response")
-        if "smartplug" in type.lower():
+
+        if "smartplug" in type.lower() and "children" in sysinfo:
+            return SmartStrip
+        elif "smartplug" in type.lower():
             return SmartPlug
         elif "smartbulb" in type.lower():
             return SmartBulb
