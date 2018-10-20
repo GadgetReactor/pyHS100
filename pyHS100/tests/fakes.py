@@ -45,6 +45,69 @@ emeter_units_support = {"get_realtime": get_realtime_units,
                         "get_monthstat": get_monthstat_units,
                         "get_daystat": get_daystat_units,}
 
+sysinfo_hs300 = {'system': {'get_sysinfo':{
+                                         'sw_ver':'1.0.6 Build 180627 Rel.081000',
+                                         'hw_ver':'1.0',
+                                         'model':'HS300(US)',
+                                         'deviceId':'7003ADE7030B7EFADE747104261A7A70931DADF4',
+                                         'oemId':'FFF22CFF774A0B89F7624BFC6F50D5DE',
+                                         'hwId':'22603EA5E716DEAEA6642A30BE87AFCB',
+                                         'rssi':-53,
+                                         'longitude_i':12.2,
+                                         'latitude_i':12.2,
+                                         'alias':'TP-LINK_Power Strip_2D5C',
+                                         'mic_type':'IOT.SMARTPLUGSWITCH',
+                                         'feature':'TIM:ENE',
+                                         'mac':'50:C7:BF:11:22:33',
+                                         'updating':0,
+                                         'led_off':0,
+                                         'children':[
+                                            {
+                                               'id':'7003ADE7030B7EFADE747104261A7A70931DADF400',
+                                               'state':1,
+                                               'alias':'my plug 1 device',
+                                               'on_time':5423,
+                                               'next_action':{'type':-1}
+                                            },
+                                            {
+                                               'id':'7003ADE7030B7EFADE747104261A7A70931DADF401',
+                                               'state':1,
+                                               'alias':'my plug 2 device',
+                                               'on_time':4750,
+                                               'next_action':{'type':-1}
+                                            },
+                                            {
+                                               'id':'7003ADE7030B7EFADE747104261A7A70931DADF402',
+                                               'state':1,
+                                               'alias':'my plug 3 device',
+                                               'on_time':4748,
+                                               'next_action':{'type':-1}
+                                            },
+                                            {
+                                               'id':'7003ADE7030B7EFADE747104261A7A70931DADF403',
+                                               'state':1,
+                                               'alias':'my plug 4 device',
+                                               'on_time':4742,
+                                               'next_action':{'type':-1}
+                                            },
+                                            {
+                                               'id':'7003ADE7030B7EFADE747104261A7A70931DADF404',
+                                               'state':1,
+                                               'alias':'my plug 5 device',
+                                               'on_time':4745,
+                                               'next_action':{'type':-1}
+                                            },
+                                            {
+                                               'id':'7003ADE7030B7EFADE747104261A7A70931DADF405',
+                                               'state':1,
+                                               'alias':'my plug 6 device',
+                                               'on_time':5028,
+                                               'next_action':{'type':-1}
+                                            }
+                                         ],
+                                         'child_num':6,
+                                         'err_code':0}}}
+
 sysinfo_hs100 = {'system': {'get_sysinfo':
                                 {'active_mode': 'schedule',
                                  'alias': 'My Smart Plug',
