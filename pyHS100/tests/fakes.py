@@ -55,7 +55,7 @@ sysinfo_hs300 = {'system': {'get_sysinfo':{
                                          'rssi':-53,
                                          'longitude_i':12.2,
                                          'latitude_i':12.2,
-                                         'alias':'TP-LINK_Power Strip_2D5C',
+                                         'alias':'TP-LINK_Power Strip_2233',
                                          'mic_type':'IOT.SMARTPLUGSWITCH',
                                          'feature':'TIM:ENE',
                                          'mac':'50:C7:BF:11:22:33',
