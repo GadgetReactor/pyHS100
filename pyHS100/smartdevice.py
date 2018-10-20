@@ -90,23 +90,23 @@ class SmartDevice(object):
                       target: str,
                       cmd: str,
                       arg: Optional[Dict] = None,
-                      child_id: str = None) -> Any:
+                      index: int = None) -> Any:
         """
         Helper returning unwrapped result object and doing error handling.
 
         :param target: Target system {system, time, emeter, ..}
         :param cmd: Command to execute
         :param arg: JSON object passed as parameter to the command
-        :param child_id:  optional child ID for context
+        :param index:  optional index number of the child ID for context
         :return: Unwrapped result for the call.
         :rtype: dict
         :raises SmartDeviceException: if command was not executed correctly
         """
-        if child_id is None:
+        if index is None:
             request={target: {cmd: arg}}
         else:
+            child_id = self._index_to_id(index)
             request={"context":{"child_ids":[child_id]}, target: {cmd: arg}}
-
         if arg is None:
             arg = {}
         try:
@@ -130,6 +130,17 @@ class SmartDevice(object):
         del result["err_code"]
 
         return result
+
+    def _index_to_id(self, index: int) -> str:
+        """
+        Returns the child ID for the given plug index
+
+        :param index: plug index (1 based, not zero based)
+        :raises SmartDeviceException: on error
+        :return: child ID string
+        :rtype: datetime
+        """
+        return self.sys_info["children"][index-1]["id"]
 
     @property
     def features(self) -> List[str]:
@@ -407,7 +418,7 @@ class SmartDevice(object):
         """
         self._query_helper("system", "set_mac_addr", {"mac": mac})
 
-    def get_emeter_realtime(self, child_id: str = None) -> Optional[Dict]:
+    def get_emeter_realtime(self, index: int = None) -> Optional[Dict]:
         """
         Retrive current energy readings from device.
 
@@ -421,7 +432,7 @@ class SmartDevice(object):
 
         return EmeterStatus(self._query_helper(self.emeter_type,
                                                "get_realtime",
-                                               child_id=child_id))
+                                               index=index))
 
     def get_emeter_daily(self,
                          year: int = None,

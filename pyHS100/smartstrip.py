@@ -176,7 +176,7 @@ class SmartStrip(SmartDevice):
         :raises SmartDeviceException: on error
         """
         self._query_helper("system", "set_relay_state", {"state": 1},
-                           self._index_to_id(index))
+                           index=index)
 
     def turn_off_plug(self, index: int):
         """
@@ -186,18 +186,7 @@ class SmartStrip(SmartDevice):
         :raises SmartDeviceException: on error
         """
         self._query_helper("system", "set_relay_state", {"state": 0},
-                           self._index_to_id(index))
-
-    def _index_to_id(self, index: int) -> str:
-        """
-        Returns the child ID for the given plug index
-
-        :param index: plug index (1 based, not zero based)
-        :raises SmartDeviceException: on error
-        :return: child ID string
-        :rtype: datetime
-        """
-        return self.sys_info["children"][index-1]["id"]
+                           index=index)
 
     @property
     def led(self) -> bool:
@@ -258,9 +247,10 @@ class SmartStrip(SmartDevice):
         """
         if not self.has_emeter:
             return None
-        if index is None:
-            child_id = None
-        else:
-            child_id = self._index_to_id(index)
-        return super().get_emeter_realtime(child_id)
-
+        # Should we build a dict with total and children?
+        #if index is None:
+            #for index in range(0, self.num_plugs):
+            #    rval = super().get_emeter_realtime(index)
+            #    print("rval={}".format(rval))
+            #return {}
+        return super().get_emeter_realtime(index)
