@@ -52,7 +52,6 @@ class Discover:
                 ip, port = addr
                 info = json.loads(protocol.decrypt(data))
                 device_class = Discover._get_device_class(info)
-                print("device_class={}".format(device_class))
                 if device_class is not None:
                     devices[ip] = device_class(ip)
         except socket.timeout:
