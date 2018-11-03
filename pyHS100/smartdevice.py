@@ -90,23 +90,22 @@ class SmartDevice(object):
                       target: str,
                       cmd: str,
                       arg: Optional[Dict] = None,
-                      index: int = None) -> Any:
+                      context: str = None) -> Any:
         """
         Helper returning unwrapped result object and doing error handling.
 
         :param target: Target system {system, time, emeter, ..}
         :param cmd: Command to execute
         :param arg: JSON object passed as parameter to the command
-        :param index:  optional index number of the child ID for context
+        :param context: optional child ID for context in a parent device
         :return: Unwrapped result for the call.
         :rtype: dict
         :raises SmartDeviceException: if command was not executed correctly
         """
-        if index is None:
-            request={target: {cmd: arg}}
+        if context is None:
+            request = {target: {cmd: arg}}
         else:
-            child_id = self._index_to_id(index)
-            request={"context":{"child_ids":[child_id]}, target: {cmd: arg}}
+            request = {"context": {"child_ids": [context]}, target: {cmd: arg}}
         if arg is None:
             arg = {}
         try:
@@ -133,17 +132,6 @@ class SmartDevice(object):
         del result["err_code"]
 
         return result
-
-    def _index_to_id(self, index: int) -> str:
-        """
-        Returns the child ID for the given plug index
-
-        :param index: plug index (1 based, not zero based)
-        :raises SmartDeviceException: on error
-        :return: child ID string
-        :rtype: datetime
-        """
-        return self.sys_info["children"][index-1]["id"]
 
     @property
     def features(self) -> List[str]:
@@ -400,21 +388,21 @@ class SmartDevice(object):
         """
         self._query_helper("system", "set_mac_addr", {"mac": mac})
 
-    def get_emeter_realtime(self, index: int = None) -> Optional[Dict]:
+    def get_emeter_realtime(self) -> Optional[Dict]:
         """
-        Retrive current energy readings from device.
+        Retrieve current energy readings from device.
 
+        :param context: Child ID
         :returns: current readings or False
         :rtype: dict, None
-                  None if device has no energy meter or error occured
+                  None if device has no energy meter or error occurred
         :raises SmartDeviceException: on error
         """
         if not self.has_emeter:
             return None
 
         return EmeterStatus(self._query_helper(self.emeter_type,
-                                               "get_realtime",
-                                               index=index))
+                                               "get_realtime", self._context))
 
     def get_emeter_daily(self,
                          year: int = None,
@@ -424,11 +412,11 @@ class SmartDevice(object):
         Retrieve daily statistics for a given month
 
         :param year: year for which to retrieve statistics (default: this year)
-        :param month: month for which to retrieve statistcs (default: this
+        :param month: month for which to retrieve statistics (default: this
                       month)
         :param kwh: return usage in kWh (default: True)
         :return: mapping of day of month to value
-                 None if device has no energy meter or error occured
+                 None if device has no energy meter or error occurred
         :rtype: dict
         :raises SmartDeviceException: on error
         """
@@ -441,7 +429,8 @@ class SmartDevice(object):
             month = datetime.datetime.now().month
 
         response = self._query_helper(self.emeter_type, "get_daystat",
-                                      {'month': month, 'year': year})
+                                      {'month': month, 'year': year},
+                                      self._context)
         response = [EmeterStatus(**x) for x in response["day_list"]]
 
         key = 'energy_wh'
@@ -472,7 +461,7 @@ class SmartDevice(object):
             year = datetime.datetime.now().year
 
         response = self._query_helper(self.emeter_type, "get_monthstat",
-                                      {'year': year})
+                                      {'year': year}, self._context)
         response = [EmeterStatus(**x) for x in response["month_list"]]
 
         key = 'energy_wh'
@@ -494,7 +483,8 @@ class SmartDevice(object):
         if not self.has_emeter:
             return False
 
-        self._query_helper(self.emeter_type, "erase_emeter_stat", None)
+        self._query_helper(self.emeter_type, "erase_emeter_stat", None,
+                           self._context)
 
         # As query_helper raises exception in case of failure, we have
         # succeeded when we are this far.
@@ -566,6 +556,21 @@ class SmartDevice(object):
         :rtype: dict
         """
         raise NotImplementedError("Device subclass needs to implement this.")
+
+    @property
+    def num_children(self) -> int:
+        """
+        Get number of children for a device
+
+        :return: number of children
+        :rtype: int
+        :raises SmartDeviceException: on error
+        """
+        child_num = self.sys_info["child_num"]
+        if child_num:
+            return int(child_num)
+        else:
+            return 0
 
     def __repr__(self):
         return "<%s at %s (%s), is_on: %s - dev specific: %s>" % (

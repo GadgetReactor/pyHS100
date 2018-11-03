@@ -70,7 +70,8 @@ def cli(ctx, ip, host, alias, debug, bulb, plug, strip):
         elif strip:
             dev = SmartStrip(host)
         else:
-            click.echo("Unable to detect type, use --strip or --bulb or --plug!")
+            click.echo(
+                "Unable to detect type, use --strip or --bulb or --plug!")
             return
         ctx.obj = dev
 
@@ -154,13 +155,12 @@ def alias(dev, new_alias):
 
 @cli.command()
 @pass_dev
-@click.argument('index', type=int, required=False)
 @click.option('--year', type=Datetime(format='%Y'),
               default=None, required=False)
 @click.option('--month', type=Datetime(format='%Y-%m'),
               default=None, required=False)
 @click.option('--erase', is_flag=True)
-def emeter(dev, index, year, month, erase):
+def emeter(dev, year, month, erase):
     """Query emeter for historical consumption."""
     click.echo(click.style("== Emeter ==", bold=True))
     if not dev.has_emeter:
@@ -172,17 +172,22 @@ def emeter(dev, index, year, month, erase):
         dev.erase_emeter_stats()
         return
 
-    if index is None:
-        click.echo("Current state: %s" % dev.get_emeter_realtime())
-    else:
-        click.echo("Current state: %s" % dev.get_emeter_realtime(index))
     if year:
         click.echo("== For year %s ==" % year.year)
-        click.echo(dev.get_emeter_monthly(year.year))
+        emeter_status = dev.get_emeter_monthly(year.year)
     elif month:
         click.echo("== For month %s of %s ==" % (month.month, month.year))
-        dev.get_emeter_daily(year=month.year, month=month.month)
+        emeter_status = dev.get_emeter_daily(year=month.year,
+                                             month=month.month)
+    else:
+        emeter_status = dev.get_emeter_realtime()
+        click.echo("== Current State ==")
 
+    if isinstance(emeter_status, list):
+        for plug in emeter_status:
+            click.echo("Plug %d: %s" % (emeter_status.index(plug) + 1, plug))
+    else:
+        click.echo("%s" % emeter_status)
 
 @cli.command()
 @click.argument("brightness", type=click.IntRange(0, 100), default=None,
@@ -257,7 +262,7 @@ def on(plug, index):
     if index is None:
         plug.turn_on()
     else:
-        plug.turn_on_plug(index)
+        plug.turn_on(index - 1)
 
 
 @cli.command()
@@ -269,7 +274,7 @@ def off(plug, index):
     if index is None:
         plug.turn_off()
     else:
-        plug.turn_off_plug(index)
+        plug.turn_off(index - 1)
 
 
 @cli.command()

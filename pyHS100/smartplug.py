@@ -33,9 +33,11 @@ class SmartPlug(SmartDevice):
 
     def __init__(self,
                  host: str,
-                 protocol: 'TPLinkSmartHomeProtocol' = None) -> None:
+                 protocol: 'TPLinkSmartHomeProtocol' = None,
+                 context: str = None) -> None:
         SmartDevice.__init__(self, host, protocol)
         self._type = "emeter"
+        self._context = context
 
     @property
     def state(self) -> str:
@@ -115,7 +117,7 @@ class SmartPlug(SmartDevice):
         elif value > 0 and value <= 100:
             self.turn_on()
             self._query_helper("smartlife.iot.dimmer", "set_brightness",
-                               {"brightness": value})
+                               {"brightness": value}, self._context)
         else:
             raise ValueError("Brightness value %s is not valid.", value)
 
@@ -126,7 +128,6 @@ class SmartPlug(SmartDevice):
 
         :return: True if switch supports brightness changes, False otherwise
         :rtype: bool
-
         """
         return "brightness" in self.sys_info
 
@@ -155,7 +156,8 @@ class SmartPlug(SmartDevice):
 
         :raises SmartDeviceException: on error
         """
-        self._query_helper("system", "set_relay_state", {"state": 1})
+        self._query_helper("system", "set_relay_state", {"state": 1},
+                           self._context)
 
     def turn_off(self):
         """
@@ -163,7 +165,8 @@ class SmartPlug(SmartDevice):
 
         :raises SmartDeviceException: on error
         """
-        self._query_helper("system", "set_relay_state", {"state": 0})
+        self._query_helper("system", "set_relay_state", {"state": 0},
+                           self._context)
 
     @property
     def led(self) -> bool:
@@ -183,7 +186,8 @@ class SmartPlug(SmartDevice):
         :param bool state: True to set led on, False to set led off
         :raises SmartDeviceException: on error
         """
-        self._query_helper("system", "set_led_off", {"off": int(not state)})
+        self._query_helper("system", "set_led_off", {"off": int(not state)},
+                           self._context)
 
     @property
     def on_since(self) -> datetime.datetime:
@@ -193,8 +197,15 @@ class SmartPlug(SmartDevice):
         :return: datetime for on since
         :rtype: datetime
         """
-        return datetime.datetime.now() - \
-            datetime.timedelta(seconds=self.sys_info["on_time"])
+        if self._context:
+            for plug in self.sys_info["children"]:
+                if plug["id"] == self._context:
+                    on_time = plug["on_time"]
+                    break
+        else:
+            on_time = self.sys_info["on_time"]
+
+        return datetime.datetime.now() - datetime.timedelta(seconds=on_time)
 
     @property
     def state_information(self) -> Dict[str, Any]:

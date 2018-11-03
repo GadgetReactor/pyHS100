@@ -12,6 +12,8 @@ Python Library to control TPLink smart plugs/switches and smart bulbs.
   * HS100
   * HS105
   * HS110
+* Power Strips
+  * HS300
 * Wall switches
   * HS200
   * HS210
