@@ -74,38 +74,40 @@ class SmartDevice(object):
 
     def __init__(self,
                  host: str,
-                 protocol: Optional[TPLinkSmartHomeProtocol] = None) -> None:
+                 protocol: Optional[TPLinkSmartHomeProtocol] = None,
+                 context: str = None) -> None:
         """
         Create a new SmartDevice instance.
 
         :param str host: host name or ip address on which the device listens
+        :param context: optional child ID for context in a parent device
         """
         self.host = host
         if not protocol:
             protocol = TPLinkSmartHomeProtocol()
         self.protocol = protocol
         self.emeter_type = "emeter"  # type: str
+        self.context = context
 
     def _query_helper(self,
                       target: str,
                       cmd: str,
-                      arg: Optional[Dict] = None,
-                      context: str = None) -> Any:
+                      arg: Optional[Dict] = None) -> Any:
         """
         Helper returning unwrapped result object and doing error handling.
 
         :param target: Target system {system, time, emeter, ..}
         :param cmd: Command to execute
         :param arg: JSON object passed as parameter to the command
-        :param context: optional child ID for context in a parent device
         :return: Unwrapped result for the call.
         :rtype: dict
         :raises SmartDeviceException: if command was not executed correctly
         """
-        if context is None:
+        if self.context is None:
             request = {target: {cmd: arg}}
         else:
-            request = {"context": {"child_ids": [context]}, target: {cmd: arg}}
+            request = {"context": {"child_ids": [self.context]},
+                       target: {cmd: arg}}
         if arg is None:
             arg = {}
         try:
@@ -392,7 +394,6 @@ class SmartDevice(object):
         """
         Retrieve current energy readings from device.
 
-        :param context: Child ID
         :returns: current readings or False
         :rtype: dict, None
                   None if device has no energy meter or error occurred
@@ -402,7 +403,7 @@ class SmartDevice(object):
             return None
 
         return EmeterStatus(self._query_helper(self.emeter_type,
-                                               "get_realtime", self._context))
+                                               "get_realtime"))
 
     def get_emeter_daily(self,
                          year: int = None,
@@ -429,8 +430,7 @@ class SmartDevice(object):
             month = datetime.datetime.now().month
 
         response = self._query_helper(self.emeter_type, "get_daystat",
-                                      {'month': month, 'year': year},
-                                      self._context)
+                                      {'month': month, 'year': year})
         response = [EmeterStatus(**x) for x in response["day_list"]]
 
         key = 'energy_wh'
@@ -461,7 +461,7 @@ class SmartDevice(object):
             year = datetime.datetime.now().year
 
         response = self._query_helper(self.emeter_type, "get_monthstat",
-                                      {'year': year}, self._context)
+                                      {'year': year})
         response = [EmeterStatus(**x) for x in response["month_list"]]
 
         key = 'energy_wh'
@@ -483,8 +483,7 @@ class SmartDevice(object):
         if not self.has_emeter:
             return False
 
-        self._query_helper(self.emeter_type, "erase_emeter_stat", None,
-                           self._context)
+        self._query_helper(self.emeter_type, "erase_emeter_stat", None)
 
         # As query_helper raises exception in case of failure, we have
         # succeeded when we are this far.

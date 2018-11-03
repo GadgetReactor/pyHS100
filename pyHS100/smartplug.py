@@ -35,9 +35,8 @@ class SmartPlug(SmartDevice):
                  host: str,
                  protocol: 'TPLinkSmartHomeProtocol' = None,
                  context: str = None) -> None:
-        SmartDevice.__init__(self, host, protocol)
+        SmartDevice.__init__(self, host, protocol, context)
         self._type = "emeter"
-        self._context = context
 
     @property
     def state(self) -> str:
@@ -117,7 +116,7 @@ class SmartPlug(SmartDevice):
         elif value > 0 and value <= 100:
             self.turn_on()
             self._query_helper("smartlife.iot.dimmer", "set_brightness",
-                               {"brightness": value}, self._context)
+                               {"brightness": value})
         else:
             raise ValueError("Brightness value %s is not valid.", value)
 
@@ -156,8 +155,7 @@ class SmartPlug(SmartDevice):
 
         :raises SmartDeviceException: on error
         """
-        self._query_helper("system", "set_relay_state", {"state": 1},
-                           self._context)
+        self._query_helper("system", "set_relay_state", {"state": 1})
 
     def turn_off(self):
         """
@@ -165,8 +163,7 @@ class SmartPlug(SmartDevice):
 
         :raises SmartDeviceException: on error
         """
-        self._query_helper("system", "set_relay_state", {"state": 0},
-                           self._context)
+        self._query_helper("system", "set_relay_state", {"state": 0})
 
     @property
     def led(self) -> bool:
@@ -186,8 +183,7 @@ class SmartPlug(SmartDevice):
         :param bool state: True to set led on, False to set led off
         :raises SmartDeviceException: on error
         """
-        self._query_helper("system", "set_led_off", {"off": int(not state)},
-                           self._context)
+        self._query_helper("system", "set_led_off", {"off": int(not state)})
 
     @property
     def on_since(self) -> datetime.datetime:
@@ -197,9 +193,9 @@ class SmartPlug(SmartDevice):
         :return: datetime for on since
         :rtype: datetime
         """
-        if self._context:
+        if self.context:
             for plug in self.sys_info["children"]:
-                if plug["id"] == self._context:
+                if plug["id"] == self.context:
                     on_time = plug["on_time"]
                     break
         else:

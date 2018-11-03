@@ -41,25 +41,29 @@ class SmartStrip(SmartPlug):
             self.plug.append(SmartPlug(host, protocol, context=plug["id"]))
 
     @property
-    def state(self) -> str:
+    def state(self) -> list:
         """
         Retrieve the switch state
 
-        :returns: one of
+        :returns: list with the state of each child plug
                   SWITCH_STATE_ON
                   SWITCH_STATE_OFF
                   SWITCH_STATE_UNKNOWN
-        :rtype: str
+        :rtype: list
         """
-        relay_state = self.sys_info['relay_state']
+        plug_states = []
+        for plug in range(self.num_children):
+            relay_state = self.sys_info["children"][plug]["state"]
 
-        if relay_state == 0:
-            return SmartStrip.SWITCH_STATE_OFF
-        elif relay_state == 1:
-            return SmartStrip.SWITCH_STATE_ON
-        else:
-            _LOGGER.warning("Unknown state %s returned.", relay_state)
-            return SmartStrip.SWITCH_STATE_UNKNOWN
+            if relay_state == 0:
+                plug_states.append(SmartStrip.SWITCH_STATE_OFF)
+            if relay_state == 1:
+                plug_states.append(SmartStrip.SWITCH_STATE_ON)
+            else:
+                _LOGGER.warning("Unknown state %s returned.", relay_state)
+                plug_states.append(SmartStrip.SWITCH_STATE_UNKNOWN)
+
+        return plug_states
 
     @state.setter
     def state(self, value: str):
