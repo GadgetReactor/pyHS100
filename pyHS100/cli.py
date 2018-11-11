@@ -153,6 +153,7 @@ def alias(dev, new_alias):
 
     click.echo("Alias: %s" % dev.alias)
 
+
 @cli.command()
 @pass_dev
 @click.option('--year', type=Datetime(format='%Y'),
@@ -188,6 +189,7 @@ def emeter(dev, year, month, erase):
             click.echo("Plug %d: %s" % (emeter_status.index(plug) + 1, plug))
     else:
         click.echo("%s" % emeter_status)
+
 
 @cli.command()
 @click.argument("brightness", type=click.IntRange(0, 100), default=None,
