@@ -565,9 +565,8 @@ class SmartDevice(object):
         :rtype: int
         :raises SmartDeviceException: on error
         """
-        child_num = self.sys_info["child_num"]
-        if child_num:
-            return int(child_num)
+        if "child_num" in self.sys_info:
+            return int(self.sys_info["child_num"])
         else:
             return 0
 

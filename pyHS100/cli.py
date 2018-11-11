@@ -262,7 +262,7 @@ def on(plug, index):
     if index is None:
         plug.turn_on()
     else:
-        plug.turn_on(index - 1)
+        plug.turn_on(index=(index - 1))
 
 
 @cli.command()
@@ -274,7 +274,7 @@ def off(plug, index):
     if index is None:
         plug.turn_off()
     else:
-        plug.turn_off(index - 1)
+        plug.turn_off(index=(index - 1))
 
 
 @cli.command()

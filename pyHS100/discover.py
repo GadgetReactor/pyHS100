@@ -3,8 +3,8 @@ import logging
 import json
 from typing import Dict, Type
 
-from pyHS100 import TPLinkSmartHomeProtocol, SmartDevice, SmartPlug, SmartBulb
-from pyHS100 import SmartStrip
+from pyHS100 import (TPLinkSmartHomeProtocol, SmartDevice, SmartPlug,
+                     SmartBulb, SmartStrip)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -88,7 +88,6 @@ class Discover:
     @staticmethod
     def _get_device_class(info: dict) -> Type[SmartDevice]:
         """Find SmartDevice subclass for device described by passed data."""
-        print("got info: {}".format(info))
         if "system" in info and "get_sysinfo" in info["system"]:
             sysinfo = info["system"]["get_sysinfo"]
             if "type" in sysinfo:
