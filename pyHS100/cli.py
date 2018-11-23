@@ -219,7 +219,7 @@ def hsv(dev, ctx, h, s, v):
     if h is None:
         click.echo("Current HSV: %s %s %s" % dev.hsv)
     elif s is None or v is None:
-        raise click.BadArgumentUsage("Changing color needs 3 values.", ctx)
+        raise click.BadArgumentUsage("Setting a color requires 3 values.", ctx)
     else:
         click.echo("Setting HSV: %s %s %s" % (h, s, v))
         dev.hsv = (h, s, v)
