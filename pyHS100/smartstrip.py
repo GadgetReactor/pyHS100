@@ -31,12 +31,12 @@ class SmartStrip(SmartPlug):
                  protocol: 'TPLinkSmartHomeProtocol' = None) -> None:
         SmartPlug.__init__(self, host, protocol)
         self.emeter_type = "emeter"
-        self.plug = []
+        self.plugs = []
         for plug in self.sys_info["children"]:
-            self.plug.append(SmartPlug(host, protocol, context=plug["id"]))
+            self.plugs.append(SmartPlug(host, protocol, context=plug["id"]))
 
     @property
-    def state(self) -> Dict[int, str]:
+    def state(self) -> Dict[SmartPlug, str]:
         """
         Retrieve the switch state
 
@@ -46,7 +46,7 @@ class SmartStrip(SmartPlug):
                   SWITCH_STATE_UNKNOWN
         :rtype: dict
         """
-        plug_states = []
+        states = {}
         for plug in range(self.num_children):
             relay_state = self.sys_info["children"][plug]["state"]
 
@@ -58,9 +58,9 @@ class SmartStrip(SmartPlug):
                 _LOGGER.warning("Unknown state %s returned.", relay_state)
                 switch_state = SmartPlug.SWITCH_STATE_UNKNOWN
 
-            plug_states.append({"index": plug, "state": switch_state})
+            states[plug] = switch_state
 
-        return plug_states
+        return states
 
     @state.setter
     def state(self, value: str):
@@ -94,14 +94,7 @@ class SmartStrip(SmartPlug):
         :raises ValueError: on invalid state
         :raises SmartDeviceException: on error
         """
-        if not isinstance(value, str):
-            raise ValueError("State must be str, not of %s.", type(value))
-        elif value.upper() == SmartPlug.SWITCH_STATE_ON:
-            self.turn_on(index=index)
-        elif value.upper() == SmartPlug.SWITCH_STATE_OFF:
-            self.turn_off(index=index)
-        else:
-            raise ValueError("State %s is not valid.", value)
+        self.plugs[index].set_state(value)
 
     def is_on(self, *, index: int = -1) -> Any:
         """
@@ -111,13 +104,12 @@ class SmartStrip(SmartPlug):
         :return: True if device is on, False otherwise, Dict without index
         """
         if index < 0:
-            is_on = []
+            is_on = {}
             for plug in range(self.num_children):
-                is_on.append({"index": plug,
-                              "is_on": self.plug[plug].is_on()})
+                is_on[plug] = self.plug[plug].is_on()
             return is_on
         else:
-            return self.plug[index].is_on()
+            return self.plugs[index].is_on()
 
     def turn_on(self, *, index: int = -1):
         """
@@ -129,7 +121,7 @@ class SmartStrip(SmartPlug):
         if index < 0:
             self._query_helper("system", "set_relay_state", {"state": 1})
         else:
-            self.plug[index].turn_on()
+            self.plugs[index].turn_on()
 
     def turn_off(self, *, index: int = -1):
         """
@@ -141,7 +133,7 @@ class SmartStrip(SmartPlug):
         if index < 0:
             self._query_helper("system", "set_relay_state", {"state": 0})
         else:
-            self.plug[index].turn_off()
+            self.plugs[index].turn_off()
 
     def on_since(self, *, index: int = -1) -> Any:
         """
@@ -155,10 +147,10 @@ class SmartStrip(SmartPlug):
             on_since_list = []
             for plug in range(self.num_children):
                 on_since_list.append({"index": plug,
-                                      "on_since": self.plug[plug].on_since})
+                                      "on_since": self.plugs[plug].on_since})
             return on_since_list
         else:
-            return self.plug[index].on_since
+            return self.plugs[index].on_since
 
     @property
     def state_information(self) -> Dict[str, Any]:
@@ -190,7 +182,7 @@ class SmartStrip(SmartPlug):
         if index < 0:
             emeter_status = []
             for index in range(self.num_children):
-                emeter_status.append(self.plug[index].get_emeter_realtime())
+                emeter_status.append(self.plugs[index].get_emeter_realtime())
             return emeter_status
         else:
-            return self.plug[index].get_emeter_realtime()
+            return self.plugs[index].get_emeter_realtime()
