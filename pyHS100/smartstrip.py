@@ -36,7 +36,7 @@ class SmartStrip(SmartPlug):
             self.plugs.append(SmartPlug(host, protocol, context=plug["id"]))
 
     @property
-    def state(self) -> Dict[SmartPlug, str]:
+    def state(self) -> Dict[int, str]:
         """
         Retrieve the switch state
 
@@ -144,11 +144,10 @@ class SmartStrip(SmartPlug):
         :rtype: datetime with index, Dict[int, str] without index
         """
         if index < 0:
-            on_since_list = []
+            on_since = {}
             for plug in range(self.num_children):
-                on_since_list.append({"index": plug,
-                                      "on_since": self.plugs[plug].on_since})
-            return on_since_list
+                on_since[plug] = self.plugs[plug].on_since
+            return on_since
         else:
             return self.plugs[index].on_since
 
@@ -166,23 +165,26 @@ class SmartStrip(SmartPlug):
                 self.on_since(index=plug_index)
         return state
 
-    def get_emeter_realtime(self, *, index: int = -1) -> Optional[list]:
+    def get_emeter_realtime(self, *,
+                            index: int = -1) -> Any:
         """
         Retrieve current energy readings from device
 
         :param index: plug index (-1 for all)
         :returns: list of current readings or False
-        :rtype: List, None
-                  None if device has no energy meter or error occurred
+        :rtype: Dict, Dict[int, Dict], None
+                Dict if index is provided
+                Dict[int, Dict] if no index provided
+                None if device has no energy meter or error occurred
         :raises SmartDeviceException: on error
         """
         if not self.has_emeter:
             return None
 
         if index < 0:
-            emeter_status = []
-            for index in range(self.num_children):
-                emeter_status.append(self.plugs[index].get_emeter_realtime())
+            emeter_status = {}
+            for plug in range(self.num_children):
+                emeter_status[plug] = self.plugs[plug].get_emeter_realtime()
             return emeter_status
         else:
             return self.plugs[index].get_emeter_realtime()
