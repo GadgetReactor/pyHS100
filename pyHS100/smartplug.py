@@ -95,7 +95,44 @@ class SmartPlug(SmartDevice):
         return int(self.sys_info['brightness'])
 
     @brightness.setter
-    def brightness(self, state: Tuple[int, int]):
+    def brightness(self, value: int):
+        """
+        Set the new switch brightness level.
+        Note:
+        When setting brightness, if the light is not
+        already on, it will be turned on automatically.
+        :param value: integer between 1 and 100
+        """
+        if not self.is_dimmable:
+            return
+
+        if not isinstance(value, int):
+            raise ValueError("Brightness must be integer, "
+                             "not of %s.", type(value))
+        elif value > 0 and value <= 100:
+            self.turn_on()
+            self._query_helper("smartlife.iot.dimmer", "set_brightness",
+                               {"brightness": value})
+        else:
+            raise ValueError("Brightness value %s is not valid.", value)
+
+    @property
+    def brightness_transition(self) -> Optional[int]:
+        """
+        Current brightness of the device, if supported.
+        Will return a a range between 0 - 100.
+
+        :returns: integer
+        :rtype: int
+
+        """
+        if not self.is_dimmable:
+            return None
+
+        return int(self.sys_info['brightness'])
+
+    @brightness_transition.setter
+    def brightness_transition(self, state: Tuple[int, int]):
         """
         Set the new switch brightness level.
 

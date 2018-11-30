@@ -188,11 +188,11 @@ def brightness(dev, brightness, duration):
         click.echo("This device does not support brightness.")
         return
     if brightness is None:
-        click.echo("Brightness: %s" % dev.brightness)
+        click.echo("Brightness: %s" % dev.brightness_transition)
     else:
         click.echo("Setting brightness to %s with duration of %s"
                    % (brightness, duration))
-        dev.brightness = (brightness, duration)
+        dev.brightness_transition = (brightness, duration)
 
 
 @cli.command()
