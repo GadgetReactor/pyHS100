@@ -180,8 +180,9 @@ def emeter(dev, year, month, erase):
 @cli.command()
 @click.argument("brightness", type=click.IntRange(0, 100), default=None,
                 required=False)
+@click.argument("duration", type=click.IntRange(0, 10000), default=500)
 @pass_dev
-def brightness(dev, brightness):
+def brightness(dev, brightness, duration):
     """Get or set brightness."""
     if not dev.is_dimmable:
         click.echo("This device does not support brightness.")
@@ -189,8 +190,9 @@ def brightness(dev, brightness):
     if brightness is None:
         click.echo("Brightness: %s" % dev.brightness)
     else:
-        click.echo("Setting brightness to %s" % brightness)
-        dev.brightness = brightness
+        click.echo("Setting brightness to %s with duration of %s"
+                   % (brightness, duration))
+        dev.brightness = (brightness, duration)
 
 
 @cli.command()

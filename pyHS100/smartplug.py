@@ -1,6 +1,6 @@
 import datetime
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Tuple, Optional
 
 from pyHS100 import SmartDevice
 
@@ -95,7 +95,7 @@ class SmartPlug(SmartDevice):
         return int(self.sys_info['brightness'])
 
     @brightness.setter
-    def brightness(self, value: int):
+    def brightness(self, state: Tuple[int, int]):
         """
         Set the new switch brightness level.
 
@@ -103,21 +103,25 @@ class SmartPlug(SmartDevice):
         When setting brightness, if the light is not
         already on, it will be turned on automatically.
 
-        :param value: integer between 1 and 100
+        :param tuple state: brightness, duration
+        (integer between 1 and 100, integer between 1 and 10000)
 
         """
         if not self.is_dimmable:
             return
-
-        if not isinstance(value, int):
+        if not isinstance(state[0], int):
             raise ValueError("Brightness must be integer, "
-                             "not of %s.", type(value))
-        elif value > 0 and value <= 100:
+                             "not of %s.", type(state[0]))
+        if not isinstance(state[1], int):
+            raise ValueError("Duration must be integer, "
+                             "not of %s.", type(state[1]))
+        elif state[0] > 0 and state[0] <= 100:
             self.turn_on()
-            self._query_helper("smartlife.iot.dimmer", "set_brightness",
-                               {"brightness": value})
+            self._query_helper("smartlife.iot.dimmer", "set_dimmer_transition",
+                               {"brightness": state[0], "duration": state[1]})
         else:
-            raise ValueError("Brightness value %s is not valid.", value)
+            raise ValueError("Brightness value %s or Duration vaule %s is"
+                             "not valid.", (state[0], state[1]))
 
     @property
     def is_dimmable(self):
