@@ -1,9 +1,16 @@
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
-from pyHS100 import SmartPlug
+from pyHS100 import SmartPlug, SmartDeviceException
 
 _LOGGER = logging.getLogger(__name__)
+
+
+class SmartStripException(SmartDeviceException):
+    """
+    SmartStripException gets raised for errors specific to the smart strip.
+    """
+    pass
 
 
 class SmartStrip(SmartPlug):
@@ -31,9 +38,22 @@ class SmartStrip(SmartPlug):
                  protocol: 'TPLinkSmartHomeProtocol' = None) -> None:
         SmartPlug.__init__(self, host, protocol)
         self.emeter_type = "emeter"
-        self.plugs = []
-        for plug in self.sys_info["children"]:
-            self.plugs.append(SmartPlug(host, protocol, context=plug["id"]))
+        self.plugs = {}
+        children = self.sys_info["children"]
+        for plug in range(self.num_children):
+            self.plugs[plug] = SmartPlug(host, protocol,
+                                         context=children[plug]["id"])
+
+    def raise_for_index(self, index: int):
+        """
+        Raises SmartStripException if the plug index is out of bounds
+
+        :param index: plug index to check
+        :raises SmartStripException: index out of bounds
+        """
+        if index not in self.plugs:
+            raise SmartStripException("plug index of %d "
+                                      "is out of bounds" % index)
 
     @property
     def state(self) -> Dict[int, str]:
@@ -47,8 +67,9 @@ class SmartStrip(SmartPlug):
         :rtype: dict
         """
         states = {}
+        children = self.sys_info["children"]
         for plug in range(self.num_children):
-            relay_state = self.sys_info["children"][plug]["state"]
+            relay_state = children[plug]["state"]
 
             if relay_state == 0:
                 switch_state = SmartPlug.SWITCH_STATE_OFF
@@ -85,7 +106,7 @@ class SmartStrip(SmartPlug):
 
     def set_state(self, value: str, *, index: int = -1):
         """
-        sets the state of a plug on the strip
+        Sets the state of a plug on the strip
 
         :param value: one of
                     SWITCH_STATE_ON
@@ -93,8 +114,13 @@ class SmartStrip(SmartPlug):
         :param index: plug index (-1 for all)
         :raises ValueError: on invalid state
         :raises SmartDeviceException: on error
+        :raises SmartStripException: index out of bounds
         """
-        self.plugs[index].set_state(value)
+        if index < 0:
+            self.state = value
+        else:
+            self.raise_for_index(index)
+            self.plugs[index].set_state(value)
 
     def is_on(self, *, index: int = -1) -> Any:
         """
@@ -104,11 +130,13 @@ class SmartStrip(SmartPlug):
         :return: True if device is on, False otherwise, Dict without index
         """
         if index < 0:
+            children = self.sys_info["children"]
             is_on = {}
             for plug in range(self.num_children):
-                is_on[plug] = self.plug[plug].is_on()
+                is_on[plug] = bool(children[plug]["relay_state"])
             return is_on
         else:
+            self.raise_for_index(index)
             return self.plugs[index].is_on()
 
     def turn_on(self, *, index: int = -1):
@@ -121,6 +149,7 @@ class SmartStrip(SmartPlug):
         if index < 0:
             self._query_helper("system", "set_relay_state", {"state": 1})
         else:
+            self.raise_for_index(index)
             self.plugs[index].turn_on()
 
     def turn_off(self, *, index: int = -1):
@@ -133,6 +162,7 @@ class SmartStrip(SmartPlug):
         if index < 0:
             self._query_helper("system", "set_relay_state", {"state": 0})
         else:
+            self.raise_for_index(index)
             self.plugs[index].turn_off()
 
     def on_since(self, *, index: int = -1) -> Any:
@@ -145,10 +175,12 @@ class SmartStrip(SmartPlug):
         """
         if index < 0:
             on_since = {}
+            children = self.sys_info["children"]
             for plug in range(self.num_children):
-                on_since[plug] = self.plugs[plug].on_since
+                on_since[plug] = children[plug]["on_time"]
             return on_since
         else:
+            self.raise_for_index(index)
             return self.plugs[index].on_since
 
     @property
@@ -160,9 +192,9 @@ class SmartStrip(SmartPlug):
         :rtype: dict
         """
         state = {'LED state': self.led}
+        on_since = self.on_since()
         for plug_index in range(self.num_children):
-            state['Plug %d on since' % (plug_index + 1)] = \
-                self.on_since(index=plug_index)
+            state['Plug %d on since' % (plug_index + 1)] = on_since[plug_index]
         return state
 
     def get_emeter_realtime(self, *,
@@ -187,4 +219,5 @@ class SmartStrip(SmartPlug):
                 emeter_status[plug] = self.plugs[plug].get_emeter_realtime()
             return emeter_status
         else:
+            self.raise_for_index(index)
             return self.plugs[index].get_emeter_realtime()
