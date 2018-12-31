@@ -55,8 +55,8 @@ sysinfo_hs300 = {
             'oemId': 'FFF22CFF774A0B89F7624BFC6F50D5DE',
             'hwId': '22603EA5E716DEAEA6642A30BE87AFCB',
             'rssi': -53,
-            'longitude_i': 12.2,
-            'latitude_i': 12.2,
+            'longitude_i': -1198698,
+            'latitude_i': 352737,
             'alias': 'TP-LINK_Power Strip_2233',
             'mic_type': 'IOT.SMARTPLUGSWITCH',
             'feature': 'TIM:ENE',
@@ -559,6 +559,8 @@ class FakeTransportProtocol(TPLinkSmartHomeProtocol):
         proto = FakeTransportProtocol.baseproto
         for target in sysinfo:
             for cmd in sysinfo[target]:
+                # if "children" in cmd:
+                #     proto[target][cmd]
                 proto[target][cmd] = sysinfo[target][cmd]
         self.proto = proto
         self.invalid = invalid
@@ -595,6 +597,7 @@ class FakeTransportProtocol(TPLinkSmartHomeProtocol):
                     "get_dev_icon": {"icon": None, "hash": None},
                     "set_mac_addr": set_mac,
                     "get_sysinfo": None,
+                    "context": None,
         },
         "emeter": { "get_realtime": None,
                     "get_daystat": None,

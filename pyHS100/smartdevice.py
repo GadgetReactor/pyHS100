@@ -491,9 +491,9 @@ class SmartDevice(object):
 
     def current_consumption(self) -> Optional[float]:
         """
-        Get the current power consumption in Watt.
+        Get the current power consumption in Watts.
 
-        :return: the current power consumption in Watt.
+        :return: the current power consumption in Watts.
                  None if device has no energy meter.
         :raises SmartDeviceException: on error
         """
@@ -555,20 +555,6 @@ class SmartDevice(object):
         :rtype: dict
         """
         raise NotImplementedError("Device subclass needs to implement this.")
-
-    @property
-    def num_children(self) -> int:
-        """
-        Get number of children for a device
-
-        :return: number of children
-        :rtype: int
-        :raises SmartDeviceException: on error
-        """
-        if "child_num" in self.sys_info:
-            return int(self.sys_info["child_num"])
-        else:
-            return 0
 
     def __repr__(self):
         return "<%s at %s (%s), is_on: %s - dev specific: %s>" % (
