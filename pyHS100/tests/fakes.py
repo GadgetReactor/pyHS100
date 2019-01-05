@@ -5,14 +5,17 @@ import logging
 
 _LOGGER = logging.getLogger(__name__)
 
+
 def get_realtime(obj, x, child_ids=[]):
     return {"current":0.268587,"voltage":125.836131,"power":33.495623,"total":0.199000}
+
 
 def get_monthstat(obj, x, child_ids=[]):
     if x["year"] < 2016:
         return {"month_list":[]}
 
     return {"month_list": [{"year": 2016, "month": 11, "energy": 1.089000}, {"year": 2016, "month": 12, "energy": 1.582000}]}
+
 
 def get_daystat(obj, x, child_ids=[]):
     if x["year"] < 2016:
@@ -21,12 +24,15 @@ def get_daystat(obj, x, child_ids=[]):
     return {"day_list": [{"year": 2016, "month": 11, "day": 24, "energy": 0.026000},
                   {"year": 2016, "month": 11, "day": 25, "energy": 0.109000}]}
 
+
 emeter_support = {"get_realtime": get_realtime,
                   "get_monthstat": get_monthstat,
                   "get_daystat": get_daystat,}
 
+
 def get_realtime_units(obj, x):
     return {"power_mw": 10800}
+
 
 def get_monthstat_units(obj, x):
     if x["year"] < 2016:
@@ -34,12 +40,14 @@ def get_monthstat_units(obj, x):
 
     return {"month_list": [{"year": 2016, "month": 11, "energy_wh": 32}, {"year": 2016, "month": 12, "energy_wh": 16}]}
 
+
 def get_daystat_units(obj, x):
     if x["year"] < 2016:
         return {"day_list":[]}
 
     return {"day_list": [{"year": 2016, "month": 11, "day": 24, "energy_wh": 20},
                   {"year": 2016, "month": 11, "day": 25, "energy_wh": 32}]}
+
 
 emeter_units_support = {"get_realtime": get_realtime_units,
                         "get_monthstat": get_monthstat_units,
