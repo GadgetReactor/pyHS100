@@ -5,16 +5,16 @@ import logging
 
 _LOGGER = logging.getLogger(__name__)
 
-def get_realtime(obj, x):
+def get_realtime(obj, x, child_ids=[]):
     return {"current":0.268587,"voltage":125.836131,"power":33.495623,"total":0.199000}
 
-def get_monthstat(obj, x):
+def get_monthstat(obj, x, child_ids=[]):
     if x["year"] < 2016:
         return {"month_list":[]}
 
     return {"month_list": [{"year": 2016, "month": 11, "energy": 1.089000}, {"year": 2016, "month": 12, "energy": 1.582000}]}
 
-def get_daystat(obj, x):
+def get_daystat(obj, x, child_ids=[]):
     if x["year"] < 2016:
         return {"day_list":[]}
 
@@ -124,6 +124,7 @@ sysinfo_hs300 = {
         }
     }
 }
+
 sysinfo_hs100 = {'system': {'get_sysinfo':
                                 {'active_mode': 'schedule',
                                  'alias': 'My Smart Plug',
@@ -559,19 +560,32 @@ class FakeTransportProtocol(TPLinkSmartHomeProtocol):
         proto = FakeTransportProtocol.baseproto
         for target in sysinfo:
             for cmd in sysinfo[target]:
-                # if "children" in cmd:
-                #     proto[target][cmd]
                 proto[target][cmd] = sysinfo[target][cmd]
         self.proto = proto
         self.invalid = invalid
 
-    def set_alias(self, x):
+    def set_alias(self, x, child_ids=[]):
         _LOGGER.debug("Setting alias to %s", x["alias"])
-        self.proto["system"]["get_sysinfo"]["alias"] = x["alias"]
+        if child_ids:
+            for child in self.proto["system"]["get_sysinfo"]["children"]:
+                if child["id"] in child_ids:
+                    child["alias"] = x["alias"]
+        else:
+            self.proto["system"]["get_sysinfo"]["alias"] = x["alias"]
 
-    def set_relay_state(self, x):
-        _LOGGER.debug("Setting relay state to %s", x)
-        self.proto["system"]["get_sysinfo"]["relay_state"] = x["state"]
+    def set_relay_state(self, x, child_ids=[]):
+        _LOGGER.debug("Setting relay state to %s", x["state"])
+
+        if not child_ids and "children" in self.proto["system"]["get_sysinfo"]:
+            for child in self.proto["system"]["get_sysinfo"]["children"]:
+                child_ids.append(child["id"])
+
+        if child_ids:
+            for child in self.proto["system"]["get_sysinfo"]["children"]:
+                if child["id"] in child_ids:
+                    child["state"] = x["state"]
+        else:
+            self.proto["system"]["get_sysinfo"]["relay_state"] = x["state"]
 
     def set_led_off(self, x):
         _LOGGER.debug("Setting led off to %s", x)
@@ -619,13 +633,23 @@ class FakeTransportProtocol(TPLinkSmartHomeProtocol):
         # HS220 brightness, different setter and getter
         "smartlife.iot.dimmer": { "set_brightness": set_hs220_brightness,
         },
+        "context": {"child_ids": None},
     }
 
     def query(self, host, request, port=9999):
         if self.invalid:
             raise SmartDeviceException("Invalid connection, can't query!")
 
+        _LOGGER.debug("Requesting {} from {}:{}".format(request, host, port))
+
         proto = self.proto
+
+        # collect child ids from context
+        try:
+            child_ids = request["context"]["child_ids"]
+            request.pop("context", None)
+        except KeyError:
+            child_ids = []
 
         target = next(iter(request))
         if target not in proto.keys():
@@ -639,7 +663,10 @@ class FakeTransportProtocol(TPLinkSmartHomeProtocol):
         _LOGGER.debug("Going to execute {}.{} (params: {}).. ".format(target, cmd, params))
 
         if callable(proto[target][cmd]):
-            res = proto[target][cmd](self, params)
+            if child_ids:
+                res = proto[target][cmd](self, params, child_ids)
+            else:
+                res = proto[target][cmd](self, params)
             # verify that change didn't break schema, requires refactoring..
             #TestSmartPlug.sysinfo_schema(self.proto["system"]["get_sysinfo"])
             return success(target, cmd, res)
