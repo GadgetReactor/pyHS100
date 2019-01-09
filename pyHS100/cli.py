@@ -1,7 +1,7 @@
+"""pyHS100 cli tool."""
 import sys
 import click
 import logging
-from click_datetime import Datetime
 from pprint import pformat as pf
 
 if sys.version_info < (3, 4):
@@ -80,15 +80,31 @@ def cli(ctx, ip, host, alias, debug, bulb, plug, strip):
 
 
 @cli.command()
+@click.option("--save")
+def dump_discover(save):
+    for dev in Discover.discover(return_raw=True).values():
+        model = dev["system"]["get_sysinfo"]["model"]
+        hw_version = dev["system"]["get_sysinfo"]["hw_ver"]
+        save_to = "%s_%s.json" % (model, hw_version)
+        click.echo("Saving info to %s" % save_to)
+        with open(save_to, "w") as f:
+            import json
+            json.dump(dev, f, sort_keys=True, indent=4)
+
+@cli.command()
 @click.option('--timeout', default=3, required=False)
 @click.option('--discover-only', default=False)
+@click.option('--dump-raw', is_flag=True)
 @click.pass_context
-def discover(ctx, timeout, discover_only):
+def discover(ctx, timeout, discover_only, dump_raw):
     """Discover devices in the network."""
     click.echo("Discovering devices for %s seconds" % timeout)
-    found_devs = Discover.discover(timeout=timeout).items()
+    found_devs = Discover.discover(timeout=timeout, return_raw=dump_raw).items()
     if not discover_only:
         for ip, dev in found_devs:
+            if dump_raw:
+                click.echo(dev)
+                continue
             ctx.obj = dev
             ctx.invoke(state)
             print()
@@ -97,7 +113,7 @@ def discover(ctx, timeout, discover_only):
 
 
 def find_host_from_alias(alias, timeout=1, attempts=3):
-    """Discover a device identified by its alias"""
+    """Discover a device identified by its alias."""
     host = None
     click.echo("Trying to discover %s using %s attempts of %s seconds" %
                (alias, attempts, timeout))
@@ -165,9 +181,23 @@ def alias(dev, new_alias):
 
 @cli.command()
 @pass_dev
-@click.option('--year', type=Datetime(format='%Y'),
+@click.argument('module')
+@click.argument('command')
+@click.argument('parameters', default=None, required=False)
+def raw_command(dev: SmartDevice, module, command, parameters):
+    """Run a raw command on the device."""
+    import ast
+    if parameters is not None:
+        parameters = ast.literal_eval(parameters)
+    res = dev._query_helper(module, command, parameters)
+    click.echo(res)
+
+
+@cli.command()
+@pass_dev
+@click.option('--year', type=click.DateTime(['%Y']),
               default=None, required=False)
-@click.option('--month', type=Datetime(format='%Y-%m'),
+@click.option('--month', type=click.DateTime(['%Y-%m']),
               default=None, required=False)
 @click.option('--erase', is_flag=True)
 def emeter(dev, year, month, erase):
@@ -220,8 +250,8 @@ def brightness(dev, brightness):
 @click.argument("temperature", type=click.IntRange(2500, 9000), default=None,
                 required=False)
 @pass_dev
-def temperature(dev, temperature):
-    """Get or set color temperature. (Bulb only)"""
+def temperature(dev: SmartBulb, temperature):
+    """Get or set color temperature."""
     if temperature is None:
         click.echo("Color temperature: %s" % dev.color_temp)
         if dev.valid_temperature_range != (0, 0):
@@ -231,7 +261,7 @@ def temperature(dev, temperature):
                        " or a pull request for model '%s'" % dev.model)
     else:
         click.echo("Setting color temperature to %s" % temperature)
-        dev.color_temp = temperature
+        dev.set_color_temp(temperature)
 
 
 @cli.command()
@@ -242,20 +272,20 @@ def temperature(dev, temperature):
 @pass_dev
 def hsv(dev, ctx, h, s, v):
     """Get or set color in HSV. (Bulb only)"""
-    if h is None:
+    if h is None or s is None or v is None:
         click.echo("Current HSV: %s %s %s" % dev.hsv)
     elif s is None or v is None:
         raise click.BadArgumentUsage("Setting a color requires 3 values.", ctx)
     else:
         click.echo("Setting HSV: %s %s %s" % (h, s, v))
-        dev.hsv = (h, s, v)
+        dev.set_hsv(h, s, v)
 
 
 @cli.command()
 @click.argument('state', type=bool, required=False)
 @pass_dev
 def led(dev, state):
-    """Get or set led state. (Plug only)"""
+    """Get or set (Plug's) led state."""
     if state is not None:
         click.echo("Turning led to %s" % state)
         dev.led = state
