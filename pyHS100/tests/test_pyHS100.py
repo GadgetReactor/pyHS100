@@ -137,18 +137,16 @@ class TestSmartPlugHS100(TestCase):
         self.assertRaises(ValueError, set_invalid_bool)
 
         orig_state = self.plug.state
-        if orig_state == SmartPlug.SWITCH_STATE_OFF:
+        if orig_state == SmartPlug.STATE_OFF:
             self.plug.state = "ON"
-            self.assertTrue(self.plug.state == SmartPlug.SWITCH_STATE_ON)
+            self.assertTrue(self.plug.state == SmartPlug.STATE_ON)
             self.plug.state = "OFF"
-            self.assertTrue(self.plug.state == SmartPlug.SWITCH_STATE_OFF)
-        elif orig_state == SmartPlug.SWITCH_STATE_ON:
+            self.assertTrue(self.plug.state == SmartPlug.STATE_OFF)
+        elif orig_state == SmartPlug.STATE_ON:
             self.plug.state = "OFF"
-            self.assertTrue(self.plug.state == SmartPlug.SWITCH_STATE_OFF)
+            self.assertTrue(self.plug.state == SmartPlug.STATE_OFF)
             self.plug.state = "ON"
-            self.assertTrue(self.plug.state == SmartPlug.SWITCH_STATE_ON)
-        elif orig_state == SmartPlug.SWITCH_STATE_UNKNOWN:
-            self.fail("can't test for unknown state")
+            self.assertTrue(self.plug.state == SmartPlug.STATE_ON)
 
     def test_get_sysinfo(self):
         # initialize checks for this already, but just to be sure
@@ -182,7 +180,8 @@ class TestSmartPlugHS100(TestCase):
             current_emeter = self.plug.get_emeter_realtime()
             self.current_consumption_schema(current_emeter)
         else:
-            self.assertEqual(self.plug.get_emeter_realtime(), None)
+            with self.assertRaises(SmartDeviceException):
+                self.plug.get_emeter_realtime()
 
     def test_get_emeter_daily(self):
         if self.plug.has_emeter:
@@ -197,8 +196,8 @@ class TestSmartPlugHS100(TestCase):
             self.assertTrue(isinstance(k, int))
             self.assertTrue(isinstance(v, float))
         else:
-            self.assertEqual(self.plug.get_emeter_daily(year=1900, month=1),
-                             None)
+            with self.assertRaises(SmartDeviceException):
+                self.plug.get_emeter_daily(year=1900, month=1)
 
     def test_get_emeter_monthly(self):
         if self.plug.has_emeter:
@@ -212,7 +211,8 @@ class TestSmartPlugHS100(TestCase):
             self.assertTrue(isinstance(k, int))
             self.assertTrue(isinstance(v, float))
         else:
-            self.assertEqual(self.plug.get_emeter_monthly(year=1900), None)
+            with self.assertRaises(SmartDeviceException):
+                self.plug.get_emeter_monthly(year=1900)
 
     @skip("not clearing your stats..")
     def test_erase_emeter_stats(self):
@@ -224,7 +224,9 @@ class TestSmartPlugHS100(TestCase):
             self.assertTrue(isinstance(x, float))
             self.assertTrue(x >= 0.0)
         else:
-            self.assertEqual(self.plug.current_consumption(), None)
+            with self.assertRaises(SmartDeviceException):
+                self.plug.current_consumption()
+
 
     def test_alias(self):
         test_alias = "TEST1234"

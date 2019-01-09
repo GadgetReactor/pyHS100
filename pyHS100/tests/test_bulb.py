@@ -120,16 +120,16 @@ class TestSmartBulb(TestCase):
         self.assertRaises(ValueError, set_invalid_bool)
 
         orig_state = self.bulb.state
-        if orig_state == SmartBulb.BULB_STATE_OFF:
-            self.bulb.state = SmartBulb.BULB_STATE_ON
-            self.assertTrue(self.bulb.state == SmartBulb.BULB_STATE_ON)
-            self.bulb.state = SmartBulb.BULB_STATE_OFF
-            self.assertTrue(self.bulb.state == SmartBulb.BULB_STATE_OFF)
-        elif orig_state == SmartBulb.BULB_STATE_ON:
-            self.bulb.state = SmartBulb.BULB_STATE_OFF
-            self.assertTrue(self.bulb.state == SmartBulb.BULB_STATE_OFF)
-            self.bulb.state = SmartBulb.BULB_STATE_ON
-            self.assertTrue(self.bulb.state == SmartBulb.BULB_STATE_ON)
+        if orig_state == SmartBulb.STATE_OFF:
+            self.bulb.state = SmartBulb.STATE_ON
+            self.assertTrue(self.bulb.state == SmartBulb.STATE_ON)
+            self.bulb.state = SmartBulb.STATE_OFF
+            self.assertTrue(self.bulb.state == SmartBulb.STATE_OFF)
+        elif orig_state == SmartBulb.STATE_ON:
+            self.bulb.state = SmartBulb.STATE_OFF
+            self.assertTrue(self.bulb.state == SmartBulb.STATE_OFF)
+            self.bulb.state = SmartBulb.STATE_ON
+            self.assertTrue(self.bulb.state == SmartBulb.STATE_ON)
 
     def test_get_sysinfo(self):
         # initialize checks for this already, but just to be sure
@@ -139,16 +139,16 @@ class TestSmartBulb(TestCase):
     def test_turns_and_isses(self):
         orig_state = self.bulb.state
 
-        if orig_state == SmartBulb.BULB_STATE_ON:
-            self.bulb.state = SmartBulb.BULB_STATE_OFF
-            self.assertTrue(self.bulb.state == SmartBulb.BULB_STATE_OFF)
-            self.bulb.state = SmartBulb.BULB_STATE_ON
-            self.assertTrue(self.bulb.state == SmartBulb.BULB_STATE_ON)
+        if orig_state == SmartBulb.STATE_ON:
+            self.bulb.state = SmartBulb.STATE_OFF
+            self.assertTrue(self.bulb.state == SmartBulb.STATE_OFF)
+            self.bulb.state = SmartBulb.STATE_ON
+            self.assertTrue(self.bulb.state == SmartBulb.STATE_ON)
         else:
-            self.bulb.state = SmartBulb.BULB_STATE_ON
-            self.assertTrue(self.bulb.state == SmartBulb.BULB_STATE_ON)
-            self.bulb.state = SmartBulb.BULB_STATE_OFF
-            self.assertTrue(self.bulb.state == SmartBulb.BULB_STATE_OFF)
+            self.bulb.state = SmartBulb.STATE_ON
+            self.assertTrue(self.bulb.state == SmartBulb.STATE_ON)
+            self.bulb.state = SmartBulb.STATE_OFF
+            self.assertTrue(self.bulb.state == SmartBulb.STATE_OFF)
 
     def test_get_emeter_realtime(self):
         self.current_consumption_schema((self.bulb.get_emeter_realtime()))
