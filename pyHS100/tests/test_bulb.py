@@ -214,15 +214,15 @@ class TestSmartBulb(TestCase):
         self.assertTrue(0 <= saturation <= 100)
         self.assertTrue(0 <= brightness <= 100)
         for invalid_hue in [-1, 361, 0.5]:
-            with self.assertRaises(SmartDeviceException):
+            with self.assertRaises(ValueError):
                 self.bulb.hsv = (invalid_hue, 0, 0)
 
         for invalid_saturation in [-1, 101, 0.5]:
-            with self.assertRaises(SmartDeviceException):
+            with self.assertRaises(ValueError):
                 self.bulb.hsv = (0, invalid_saturation, 0)
 
         for invalid_brightness in [-1, 101, 0.5]:
-            with self.assertRaises(SmartDeviceException):
+            with self.assertRaises(ValueError):
                 self.bulb.hsv = (0, 0, invalid_brightness)
 
     def test_repr(self):

@@ -28,7 +28,7 @@ class SmartPlug(SmartDevice):
     """
     def __init__(self,
                  host: str,
-                 protocol: 'TPLinkSmartHomeProtocol' = None
+                 protocol: 'TPLinkSmartHomeProtocol' = None,
                  context: str = None) -> None:
         SmartDevice.__init__(self, host, protocol)
         self.emeter_type = "emeter"

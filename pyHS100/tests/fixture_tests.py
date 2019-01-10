@@ -5,56 +5,9 @@ from unittest.mock import patch
 import pytest
 from os.path import basename
 
-from pyHS100 import DeviceType
+from pyHS100 import DeviceType, SmartStripException
 from .newfakes import *
-from .conftest import SUPPORTED_DEVICES
-
-
-BULBS = {'LB100', 'LB120', 'LB130'}
-VARIABLE_TEMP = {'LB120', 'LB130'}
-PLUGS = {'HS100', 'HS105', 'HS110', 'HS200', 'HS220'}
-COLOR_BULBS = {'LB130'}
-DIMMABLE = {*BULBS, 'HS220'}
-EMETER = {'HS110', 'HS300', *BULBS}
-
-ALL_DEVICES = BULBS.union(PLUGS)
-
-
-def filter_model(filter):
-    print(filter)
-    filtered = list()
-    for dev in SUPPORTED_DEVICES:
-        for filt in filter:
-            if filt in basename(dev):
-                filtered.append(dev)
-
-    return filtered
-
-
-has_emeter = pytest.mark.parametrize('dev', filter_model(EMETER), indirect=True)
-no_emeter = pytest.mark.parametrize('dev', filter_model(ALL_DEVICES - EMETER), indirect=True)
-
-bulb = pytest.mark.parametrize('dev', filter_model(BULBS), indirect=True)
-plug = pytest.mark.parametrize('dev', filter_model(PLUGS), indirect=True)
-
-dimmable = pytest.mark.parametrize('dev', filter_model(DIMMABLE), indirect=True)
-non_dimmable = pytest.mark.parametrize('dev', filter_model(ALL_DEVICES - DIMMABLE), indirect=True)
-
-variable_temp = pytest.mark.parametrize('dev', filter_model(VARIABLE_TEMP), indirect=True)
-non_variable_temp = pytest.mark.parametrize('dev', filter_model(BULBS - VARIABLE_TEMP), indirect=True)
-
-color_bulb = pytest.mark.parametrize('dev', filter_model(COLOR_BULBS), indirect=True)
-non_color_bulb = pytest.mark.parametrize('dev', filter_model(BULBS - COLOR_BULBS), indirect=True)
-
-# Parametrize tests to run with device both on and off
-turn_on = pytest.mark.parametrize("turn_on", [True, False])
-
-
-def handle_turn_on(dev, turn_on):
-    if turn_on:
-        dev.turn_on()
-    else:
-        dev.turn_off()
+from .conftest import *
 
 
 @plug
@@ -86,7 +39,7 @@ def test_state_info(dev):
 def test_invalid_connection(dev):
     with patch.object(FakeTransportProtocol, 'query', side_effect=SmartDeviceException):
         with pytest.raises(SmartDeviceException):
-            assert dev.is_on
+            dev.is_on
 
 
 def test_query_helper(dev):
@@ -118,6 +71,7 @@ def test_deprecated_state(dev):
 def test_deprecated_alias(dev):
     with pytest.deprecated_call():
         dev.alias = "foo"
+
 
 def test_deprecated_mac(dev):
     with pytest.deprecated_call():
@@ -347,7 +301,7 @@ def test_dimmable_brightness(dev, turn_on):
     dev.set_brightness(10)
     assert dev.brightness == 10
 
-    with pytest.raises(SmartDeviceException):
+    with pytest.raises(ValueError):
         dev.set_brightness("foo")
 
 
@@ -355,10 +309,10 @@ def test_dimmable_brightness(dev, turn_on):
 def test_invalid_brightness(dev):
     assert dev.is_dimmable
 
-    with pytest.raises(SmartDeviceException):
+    with pytest.raises(ValueError):
         dev.set_brightness(110)
 
-    with pytest.raises(SmartDeviceException):
+    with pytest.raises(ValueError):
         dev.set_brightness(-100)
 
 
@@ -388,16 +342,16 @@ def test_invalid_hsv(dev, turn_on):
 
     assert dev.is_color
 
-    for invalid_hue in [-1, 256, 0.5]:
-        with pytest.raises(SmartDeviceException):
+    for invalid_hue in [-1, 360, 0.5]:
+        with pytest.raises(ValueError):
             dev.set_hsv(invalid_hue, 0, 0)
 
     for invalid_saturation in [-1, 101, 0.5]:
-        with pytest.raises(SmartDeviceException):
+        with pytest.raises(ValueError):
             dev.set_hsv(0, invalid_saturation, 0)
 
     for invalid_brightness in [-1, 101, 0.5]:
-        with pytest.raises(SmartDeviceException):
+        with pytest.raises(ValueError):
             dev.set_hsv(0, 0, invalid_brightness)
 
 
@@ -446,3 +400,199 @@ def test_deprecated_hsv(dev, turn_on):
     handle_turn_on(dev, turn_on)
     with pytest.deprecated_call():
         dev.hsv = (1, 1, 1)
+
+
+@strip
+def test_children_is_on(dev):
+    is_on = dev.get_is_on()
+    for i in range(dev.num_children):
+        assert is_on[i] == dev.get_is_on(index=i)
+
+
+@strip
+@turn_on
+def test_children_change_state(dev, turn_on):
+    handle_turn_on(dev, turn_on)
+    for i in range(dev.num_children):
+        orig_state = dev.get_is_on(index=i)
+        if orig_state:
+            dev.turn_off(index=i)
+            assert not dev.get_is_on(index=i)
+            assert dev.get_is_off(index=i)
+
+            dev.turn_on(index=i)
+            assert dev.get_is_on(index=i)
+            assert not dev.get_is_off(index=i)
+        else:
+            dev.turn_on(index=i)
+            assert dev.get_is_on(index=i)
+            assert not dev.get_is_off(index=i)
+            dev.turn_off(index=i)
+            assert not dev.get_is_on(index=i)
+            assert dev.get_is_off(index=i)
+
+
+@strip
+def test_children_bounds(dev):
+    out_of_bounds = dev.num_children + 100
+
+    with pytest.raises(SmartDeviceException):
+        dev.turn_off(index=out_of_bounds)
+    with pytest.raises(SmartDeviceException):
+        dev.turn_on(index=out_of_bounds)
+    with pytest.raises(SmartDeviceException):
+        dev.get_is_on(index=out_of_bounds)
+    with pytest.raises(SmartDeviceException):
+        dev.get_alias(index=out_of_bounds)
+    with pytest.raises(SmartDeviceException):
+        dev.get_on_since(index=out_of_bounds)
+
+
+@strip
+def test_children_alias(dev):
+    original = dev.get_alias()
+    for plug in range(dev.num_children):
+        dev.set_alias(alias=test_alias, index=plug)
+        assert dev.get_alias(index=plug) == test_alias
+        dev.set_alias(alias=original[plug], index=plug)
+        assert dev.get_alias(index=plug) == original[plug]
+
+
+@strip
+def test_children_on_since(dev):
+    for plug in range(dev.num_children):
+        assert dev.get_on_since(index=plug)
+
+
+@pytest.mark.skip("this test will wear out your relays")
+def test_all_binary_states(dev):
+    # test every binary state
+    for state in range(2 ** dev.num_children):
+        # create binary state map
+        state_map = {}
+        for plug_index in range(dev.num_children):
+            state_map[plug_index] = bool((state >> plug_index) & 1)
+
+            if state_map[plug_index]:
+                dev.turn_on(index=plug_index)
+            else:
+                dev.turn_off(index=plug_index)
+
+        # check state map applied
+        for index, state in dev.get_is_on().items():
+            assert state_map[index] == state
+
+        # toggle each outlet with state map applied
+        for plug_index in range(dev.num_children):
+
+            # toggle state
+            if state_map[plug_index]:
+                dev.turn_off(index=plug_index)
+            else:
+                dev.turn_on(index=plug_index)
+
+            # only target outlet should have state changed
+            for index, state in dev.get_is_on().items():
+                if index == plug_index:
+                    assert state != state_map[index]
+                else:
+                    assert state == state_map[index]
+
+            # reset state
+            if state_map[plug_index]:
+                dev.turn_on(index=plug_index)
+            else:
+                dev.turn_off(index=plug_index)
+
+            # original state map should be restored
+            for index, state in dev.get_is_on().items():
+                assert state == state_map[index]
+
+
+@strip
+def test_children_get_emeter_realtime(dev):
+    assert dev.has_emeter
+    # test with index
+    for plug_index in range(dev.num_children):
+        emeter = dev.get_emeter_realtime(index=plug_index)
+        CURRENT_CONSUMPTION_SCHEMA(emeter)
+
+    # test without index
+    for index, emeter in dev.get_emeter_realtime().items():
+        CURRENT_CONSUMPTION_SCHEMA(emeter)
+
+    # out of bounds
+    with pytest.raises(SmartStripException):
+        dev.get_emeter_realtime(
+            index=dev.num_children + 100
+        )
+
+
+@strip
+def test_children_get_emeter_daily(dev):
+    assert dev.has_emeter
+    # test with index
+    for plug_index in range(dev.num_children):
+        emeter = dev.get_emeter_daily(year=1900, month=1,
+                                      index=plug_index)
+        assert emeter == {}
+
+        emeter = dev.get_emeter_daily(index=plug_index)
+        assert len(emeter) > 0
+
+        k, v = emeter.popitem()
+        assert isinstance(k, int)
+        assert isinstance(v, float)
+
+    # test without index
+    all_emeter = dev.get_emeter_daily(year=1900, month=1)
+    for plug_index, emeter in all_emeter.items():
+        assert emeter == {}
+
+        emeter = dev.get_emeter_daily(index=plug_index)
+
+        k, v = emeter.popitem()
+        assert isinstance(k, int)
+        assert isinstance(v, float)
+
+    # out of bounds
+    with pytest.raises(SmartStripException):
+        dev.get_emeter_daily(
+            year=1900,
+            month=1,
+            index=dev.num_children + 100
+        )
+
+
+@strip
+def test_children_get_emeter_monthly(dev):
+    assert dev.has_emeter
+    # test with index
+    for plug_index in range(dev.num_children):
+        emeter = dev.get_emeter_monthly(year=1900,
+                                        index=plug_index)
+        assert emeter == {}
+
+        emeter = dev.get_emeter_monthly()
+        assert len(emeter) > 0
+
+        k, v = emeter.popitem()
+        assert isinstance(k, int)
+        assert isinstance(v, float)
+
+    # test without index
+    all_emeter = dev.get_emeter_monthly(year=1900)
+    for index, emeter in all_emeter.items():
+        assert emeter == {}
+        assert len(emeter) > 0
+
+        k, v = emeter.popitem()
+        assert isinstance(k, int)
+        assert isinstance(v, float)
+
+    # out of bounds
+    with pytest.raises(SmartStripException):
+        dev.get_emeter_monthly(
+            year=1900,
+            index=dev.num_children + 100
+        )

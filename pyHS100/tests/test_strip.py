@@ -108,18 +108,16 @@ class TestSmartStripHS300(TestCase):
             self.strip.state = True
 
         orig_state = self.strip.state
-        if orig_state == SmartPlug.SWITCH_STATE_OFF:
+        if orig_state == SmartPlug.STATE_OFF:
             self.strip.state = "ON"
-            self.assertTrue(self.strip.state == SmartPlug.SWITCH_STATE_ON)
+            self.assertTrue(self.strip.state == SmartPlug.STATE_ON)
             self.strip.state = "OFF"
-            self.assertTrue(self.strip.state == SmartPlug.SWITCH_STATE_OFF)
-        elif orig_state == SmartPlug.SWITCH_STATE_ON:
+            self.assertTrue(self.strip.state == SmartPlug.STATE_OFF)
+        elif orig_state == SmartPlug.STATE_ON:
             self.strip.state = "OFF"
-            self.assertTrue(self.strip.state == SmartPlug.SWITCH_STATE_OFF)
+            self.assertTrue(self.strip.state == SmartPlug.STATE_OFF)
             self.strip.state = "ON"
-            self.assertTrue(self.strip.state == SmartPlug.SWITCH_STATE_ON)
-        elif orig_state == SmartPlug.SWITCH_STATE_UNKNOWN:
-            self.fail("can't test for unknown state")
+            self.assertTrue(self.strip.state == SmartPlug.STATE_ON)
 
     def test_state_plugs(self):
         # value errors
@@ -136,29 +134,27 @@ class TestSmartStripHS300(TestCase):
         # out of bounds error
         with self.assertRaises(SmartStripException):
             self.strip.set_state(
-                value=SmartPlug.SWITCH_STATE_ON,
+                value=SmartPlug.STATE_ON,
                 index=self.strip.num_children + 100
             )
 
         # on off
         for plug_index in range(self.strip.num_children):
             orig_state = self.strip.state[plug_index]
-            if orig_state == SmartPlug.SWITCH_STATE_OFF:
+            if orig_state == SmartPlug.STATE_OFF:
                 self.strip.set_state(value="ON", index=plug_index)
                 self.assertTrue(
-                    self.strip.state[plug_index] == SmartPlug.SWITCH_STATE_ON)
+                    self.strip.state[plug_index] == SmartPlug.STATE_ON)
                 self.strip.set_state(value="OFF", index=plug_index)
                 self.assertTrue(
-                    self.strip.state[plug_index] == SmartPlug.SWITCH_STATE_OFF)
-            elif orig_state == SmartPlug.SWITCH_STATE_ON:
+                    self.strip.state[plug_index] == SmartPlug.STATE_OFF)
+            elif orig_state == SmartPlug.STATE_ON:
                 self.strip.set_state(value="OFF", index=plug_index)
                 self.assertTrue(
-                    self.strip.state[plug_index] == SmartPlug.SWITCH_STATE_OFF)
+                    self.strip.state[plug_index] == SmartPlug.STATE_OFF)
                 self.strip.set_state(value="ON", index=plug_index)
                 self.assertTrue(
-                    self.strip.state[plug_index] == SmartPlug.SWITCH_STATE_ON)
-            elif orig_state == SmartPlug.SWITCH_STATE_UNKNOWN:
-                self.fail("can't test for unknown state")
+                    self.strip.state[plug_index] == SmartPlug.STATE_ON)
 
     def test_turns_and_isses(self):
         # all on

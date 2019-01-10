@@ -1,6 +1,7 @@
 import datetime
 import logging
 from typing import Any, Dict, Optional, Union
+from deprecation import deprecated
 
 from pyHS100 import SmartPlug, SmartDeviceException, EmeterStatus
 
@@ -8,9 +9,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class SmartStripException(SmartDeviceException):
-    """
-    SmartStripException gets raised for errors specific to the smart strip.
-    """
+    """SmartStripException gets raised for errors specific to the smart strip."""
     pass
 
 
@@ -19,19 +18,19 @@ class SmartStrip(SmartPlug):
 
     Usage example when used as library:
     p = SmartStrip("192.168.1.105")
-    # print the devices alias
-    print(p.alias)
-    # change state of plug
-    p.state = "ON"
-    p.state = "OFF"
-    # query and print current state of plug
-    print(p.state)
+
+    # change state of all outlets
+    p.turn_on()
+    p.turn_off()
+
+    # change state of a single outlet
+    p.turn_on(index=1)
+
+    # query and print current state of all outlets
+    print(p.get_state())
 
     Errors reported by the device are raised as SmartDeviceExceptions,
     and should be handled by the user of the library.
-
-    Note:
-    The library references the same structure as defined for the D-Link Switch
     """
 
     def __init__(self,
@@ -58,14 +57,18 @@ class SmartStrip(SmartPlug):
                                       "is out of bounds" % index)
 
     @property
-    def state(self) -> Dict[int, str]:
-        """
-        Retrieve the switch state
+    @deprecated(details="use is_on, get_is_on()")
+    def state(self) -> bool:
+        if self.is_on:
+            return self.STATE_ON
+        return self.STATE_OFF
+
+    def get_state(self) -> Dict[int, str]:
+        """Retrieve the switch state
 
         :returns: list with the state of each child plug
-                  SWITCH_STATE_ON
-                  SWITCH_STATE_OFF
-                  SWITCH_STATE_UNKNOWN
+                  STATE_ON
+                  STATE_OFF
         :rtype: dict
         """
         states = {}
@@ -74,45 +77,42 @@ class SmartStrip(SmartPlug):
             relay_state = children[plug]["state"]
 
             if relay_state == 0:
-                switch_state = SmartPlug.SWITCH_STATE_OFF
+                switch_state = SmartPlug.STATE_OFF
             elif relay_state == 1:
-                switch_state = SmartPlug.SWITCH_STATE_ON
+                switch_state = SmartPlug.STATE_ON
             else:
-                _LOGGER.warning("Unknown state %s returned for plug %u.",
-                                relay_state, plug)
-                switch_state = SmartPlug.SWITCH_STATE_UNKNOWN
+                raise SmartStripException("Unknown relay state: %s" % relay_state)
 
             states[plug] = switch_state
 
         return states
 
     @state.setter
+    @deprecated(details="use turn_on(), turn_off()")
     def state(self, value: str):
-        """
-        Sets the state of all plugs in the strip
+        """Sets the state of all plugs in the strip
 
         :param value: one of
-                    SWITCH_STATE_ON
-                    SWITCH_STATE_OFF
+                    STATE_ON
+                    STATE_OFF
         :raises ValueError: on invalid state
         :raises SmartDeviceException: on error
         """
         if not isinstance(value, str):
             raise ValueError("State must be str, not of %s.", type(value))
-        elif value.upper() == SmartPlug.SWITCH_STATE_ON:
+        elif value.upper() == SmartPlug.STATE_ON:
             self.turn_on()
-        elif value.upper() == SmartPlug.SWITCH_STATE_OFF:
+        elif value.upper() == SmartPlug.STATE_OFF:
             self.turn_off()
         else:
             raise ValueError("State %s is not valid.", value)
 
     def set_state(self, value: str, *, index: int = -1):
-        """
-        Sets the state of a plug on the strip
+        """Sets the state of a plug on the strip
 
         :param value: one of
-                    SWITCH_STATE_ON
-                    SWITCH_STATE_OFF
+                    STATE_ON
+                    STATE_OFF
         :param index: plug index (-1 for all)
         :raises ValueError: on invalid state
         :raises SmartDeviceException: on error
@@ -124,7 +124,12 @@ class SmartStrip(SmartPlug):
             self.raise_for_index(index)
             self.plugs[index].state = value
 
-    def is_on(self, *, index: int = -1) -> Any:
+    @property
+    def is_on(self) -> bool:
+        """Return if any of the outlets are on"""
+        return any(state == "ON" for state in self.get_state().values())
+
+    def get_is_on(self, *, index: int = -1) -> Any:
         """
         Returns whether device is on.
 
@@ -143,6 +148,13 @@ class SmartStrip(SmartPlug):
         else:
             self.raise_for_index(index)
             return bool(children[index]["state"])
+
+    def get_is_off(self, *, index: int = -1) -> Any:
+        is_on = self.get_is_on(index=index)
+        if isinstance(is_on, bool):
+            return not is_on
+        else:
+            return {k: not v for k, v in is_on}
 
     def turn_on(self, *, index: int = -1):
         """
@@ -172,7 +184,12 @@ class SmartStrip(SmartPlug):
             self.raise_for_index(index)
             self.plugs[index].turn_off()
 
-    def on_since(self, *, index: int = -1) -> Any:
+    @property
+    def on_since(self) -> datetime:
+        """Returns the maximum on-time of all outlets."""
+        return max(v for v in self.get_on_since().values())
+
+    def get_on_since(self, *, index: int = -1) -> Any:
         """
         Returns pretty-printed on-time
 
@@ -185,10 +202,12 @@ class SmartStrip(SmartPlug):
         if index < 0:
             on_since = {}
             children = self.sys_info["children"]
+
             for plug in range(self.num_children):
+                child_ontime = children[plug]["on_time"]
                 on_since[plug] = \
                     datetime.datetime.now() - \
-                    datetime.timedelta(seconds=children[plug]["on_time"])
+                    datetime.timedelta(seconds=child_ontime)
             return on_since
         else:
             self.raise_for_index(index)
@@ -203,8 +222,8 @@ class SmartStrip(SmartPlug):
         :rtype: dict
         """
         state = {'LED state': self.led}
-        on_since = self.on_since()
         is_on = self.is_on()
+        on_since = self.get_on_since()
         for plug_index in range(self.num_children):
             plug_number = plug_index + 1
             if is_on[plug_index]:
@@ -225,8 +244,8 @@ class SmartStrip(SmartPlug):
         :raises SmartDeviceException: on error
         :raises SmartStripException: index out of bounds
         """
-        if not self.has_emeter:
-            return None
+        if not self.has_emeter:  # pragma: no cover
+            raise SmartStripException("Device has no emeter")
 
         if index < 0:
             emeter_status = {}
@@ -251,8 +270,8 @@ class SmartStrip(SmartPlug):
         :raises SmartDeviceException: on error
         :raises SmartStripException: index out of bounds
         """
-        if not self.has_emeter:
-            return None
+        if not self.has_emeter:  # pragma: no cover
+            raise SmartStripException("Device has no emeter")
 
         if index < 0:
             consumption = {}
@@ -268,17 +287,13 @@ class SmartStrip(SmartPlug):
 
     @property
     def icon(self):
+        """Override for base class icon property, SmartStrip and children do not
+        have icons so we return dummy strings.
         """
-        Override for base class icon property, SmartStrip and children do not
-        have icons.
-
-        :raises NotImplementedError: always
-        """
-        raise NotImplementedError("no icons for this device")
+        return {"icon": "SMARTSTRIP-DUMMY", "hash": "SMARTSTRIP-DUMMY"}
 
     def get_alias(self, *, index: int = -1) -> Union[str, Dict[int, str]]:
-        """
-        Gets the alias for a plug.
+        """Gets the alias for a plug.
 
         :param index: plug index (-1 for all)
         :return: the current power consumption in Watts.
@@ -298,26 +313,28 @@ class SmartStrip(SmartPlug):
             self.raise_for_index(index)
             return children[index]["alias"]
 
-    def set_alias(self, alias: str, index: int):
-        """
-        Sets the alias for a plug
+    def set_alias(self, alias: str, *, index: int = -1):
+        """Sets the alias for a plug
 
         :param index: plug index
         :param alias: new alias
         :raises SmartDeviceException: on error
         :raises SmartStripException: index out of bounds
         """
+        # Renaming the whole strip
+        if index < 0:
+            return super().set_alias(alias)
+
         self.raise_for_index(index)
-        self.plugs[index].alias = alias
+        self.plugs[index].set_alias(alias)
 
     def get_emeter_daily(self,
                          year: int = None,
                          month: int = None,
                          kwh: bool = True,
                          *,
-                         index: int = -1) -> Optional[Dict]:
-        """
-        Retrieve daily statistics for a given month
+                         index: int = -1) -> Dict:
+        """Retrieve daily statistics for a given month
 
         :param year: year for which to retrieve statistics (default: this year)
         :param month: month for which to retrieve statistics (default: this
@@ -329,8 +346,8 @@ class SmartStrip(SmartPlug):
         :raises SmartDeviceException: on error
         :raises SmartStripException: index out of bounds
         """
-        if not self.has_emeter:
-            return None
+        if not self.has_emeter:  # pragma: no cover
+            raise SmartStripException("Device has no emeter")
 
         emeter_daily = {}
         if index < 0:
@@ -349,9 +366,8 @@ class SmartStrip(SmartPlug):
                            year: int = None,
                            kwh: bool = True,
                            *,
-                           index: int = -1) -> Optional[Dict]:
-        """
-        Retrieve monthly statistics for a given year.
+                           index: int = -1) -> Dict:
+        """Retrieve monthly statistics for a given year.
 
         :param year: year for which to retrieve statistics (default: this year)
         :param kwh: return usage in kWh (default: True)
@@ -361,8 +377,8 @@ class SmartStrip(SmartPlug):
         :raises SmartDeviceException: on error
         :raises SmartStripException: index out of bounds
         """
-        if not self.has_emeter:
-            return None
+        if not self.has_emeter:  # pragma: no cover
+            raise SmartStripException("Device has no emeter")
 
         emeter_monthly = {}
         if index < 0:
@@ -376,8 +392,7 @@ class SmartStrip(SmartPlug):
                                                         kwh=kwh)
 
     def erase_emeter_stats(self, *, index: int = -1) -> bool:
-        """
-        Erase energy meter statistics
+        """Erase energy meter statistics
 
         :param index: plug index (-1 for all)
         :return: True if statistics were deleted
@@ -386,8 +401,8 @@ class SmartStrip(SmartPlug):
         :raises SmartDeviceException: on error
         :raises SmartStripException: index out of bounds
         """
-        if not self.has_emeter:
-            return False
+        if not self.has_emeter:  # pragma: no cover
+            raise SmartStripException("Device has no emeter")
 
         if index < 0:
             for plug in range(self.num_children):

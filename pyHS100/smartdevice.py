@@ -192,6 +192,9 @@ class SmartDevice:
         """
         return str(self.sys_info['alias'])
 
+    def get_alias(self) -> str:
+        return self.alias
+
     @alias.setter  # type: ignore
     @deprecated(details="use set_alias")
     def alias(self, alias: str) -> None:
