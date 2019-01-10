@@ -5,9 +5,29 @@ from unittest.mock import patch
 import pytest
 from os.path import basename
 
-from pyHS100 import DeviceType, SmartStripException
-from .newfakes import *
-from .conftest import *
+from pyHS100 import DeviceType, SmartStripException, SmartDeviceException
+from .newfakes import (
+    BULB_SCHEMA,
+    PLUG_SCHEMA,
+    FakeTransportProtocol,
+    CURRENT_CONSUMPTION_SCHEMA,
+    TZ_SCHEMA,
+)
+from .conftest import (
+    turn_on,
+    handle_turn_on,
+    plug,
+    strip,
+    bulb,
+    color_bulb,
+    non_color_bulb,
+    has_emeter,
+    no_emeter,
+    dimmable,
+    non_dimmable,
+    variable_temp,
+    non_variable_temp,
+)
 
 
 @plug
@@ -37,7 +57,7 @@ def test_state_info(dev):
 
 
 def test_invalid_connection(dev):
-    with patch.object(FakeTransportProtocol, 'query', side_effect=SmartDeviceException):
+    with patch.object(FakeTransportProtocol, "query", side_effect=SmartDeviceException):
         with pytest.raises(SmartDeviceException):
             dev.is_on
 
@@ -231,7 +251,7 @@ def test_on_since(dev):
 
 
 def test_icon(dev):
-    assert set(dev.icon.keys()), {'icon', 'hash'}
+    assert set(dev.icon.keys()), {"icon", "hash"}
 
 
 def test_time(dev):
@@ -252,11 +272,11 @@ def test_location(dev):
 
 
 def test_rssi(dev):
-    PLUG_SCHEMA({'rssi': dev.rssi})  # wrapping for vol
+    PLUG_SCHEMA({"rssi": dev.rssi})  # wrapping for vol
 
 
 def test_mac(dev):
-    PLUG_SCHEMA({'mac': dev.mac})  # wrapping for val
+    PLUG_SCHEMA({"mac": dev.mac})  # wrapping for val
     # TODO check setting?
 
 
@@ -523,9 +543,7 @@ def test_children_get_emeter_realtime(dev):
 
     # out of bounds
     with pytest.raises(SmartStripException):
-        dev.get_emeter_realtime(
-            index=dev.num_children + 100
-        )
+        dev.get_emeter_realtime(index=dev.num_children + 100)
 
 
 @strip
@@ -533,8 +551,7 @@ def test_children_get_emeter_daily(dev):
     assert dev.has_emeter
     # test with index
     for plug_index in range(dev.num_children):
-        emeter = dev.get_emeter_daily(year=1900, month=1,
-                                      index=plug_index)
+        emeter = dev.get_emeter_daily(year=1900, month=1, index=plug_index)
         assert emeter == {}
 
         emeter = dev.get_emeter_daily(index=plug_index)
@@ -557,11 +574,7 @@ def test_children_get_emeter_daily(dev):
 
     # out of bounds
     with pytest.raises(SmartStripException):
-        dev.get_emeter_daily(
-            year=1900,
-            month=1,
-            index=dev.num_children + 100
-        )
+        dev.get_emeter_daily(year=1900, month=1, index=dev.num_children + 100)
 
 
 @strip
@@ -569,8 +582,7 @@ def test_children_get_emeter_monthly(dev):
     assert dev.has_emeter
     # test with index
     for plug_index in range(dev.num_children):
-        emeter = dev.get_emeter_monthly(year=1900,
-                                        index=plug_index)
+        emeter = dev.get_emeter_monthly(year=1900, index=plug_index)
         assert emeter == {}
 
         emeter = dev.get_emeter_monthly()
@@ -592,7 +604,4 @@ def test_children_get_emeter_monthly(dev):
 
     # out of bounds
     with pytest.raises(SmartStripException):
-        dev.get_emeter_monthly(
-            year=1900,
-            index=dev.num_children + 100
-        )
+        dev.get_emeter_monthly(year=1900, index=dev.num_children + 100)
