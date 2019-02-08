@@ -67,7 +67,7 @@ class SmartStrip(SmartPlug):
             return self.STATE_ON
         return self.STATE_OFF
 
-    def get_state(self) -> Dict[int, str]:
+    def get_state(self, *, index=-1) -> Dict[int, str]:
         """Retrieve the switch state
 
         :returns: list with the state of each child plug
@@ -75,23 +75,15 @@ class SmartStrip(SmartPlug):
                   STATE_OFF
         :rtype: dict
         """
-        states = {}
-        children = self.sys_info["children"]
-        for plug in range(self.num_children):
-            relay_state = children[plug]["state"]
+        def _state_for_bool(b):
+            return SmartPlug.STATE_ON if b else SmartPlug.STATE_OFF
+        is_on = self.get_is_on(index=index)
+        if isinstance(is_on, bool):
+            return _state_for_bool(is_on)
 
-            if relay_state == 0:
-                switch_state = SmartPlug.STATE_OFF
-            elif relay_state == 1:
-                switch_state = SmartPlug.STATE_ON
-            else:
-                raise SmartStripException(
-                    "Unknown relay state: %s" % relay_state
-                )
+        print(is_on)
 
-            states[plug] = switch_state
-
-        return states
+        return {k: _state_for_bool(v) for k, v in self.get_is_on().items()}
 
     @state.setter
     @deprecated(details="use turn_on(), turn_off()")

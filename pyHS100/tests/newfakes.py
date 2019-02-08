@@ -294,9 +294,11 @@ class FakeTransportProtocol(TPLinkSmartHomeProtocol):
             for child in self.proto["system"]["get_sysinfo"]["children"]:
                 child_ids.append(child["id"])
 
+        _LOGGER.info("child_ids: %s", child_ids)
         if child_ids:
             for child in self.proto["system"]["get_sysinfo"]["children"]:
                 if child["id"] in child_ids:
+                    _LOGGER.info("Found %s, turning to %s", child, x["state"])
                     child["state"] = x["state"]
         else:
             self.proto["system"]["get_sysinfo"]["relay_state"] = x["state"]

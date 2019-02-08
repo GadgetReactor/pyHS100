@@ -140,42 +140,42 @@ class TestSmartStripHS300(TestCase):
 
         # on off
         for plug_index in range(self.strip.num_children):
-            orig_state = self.strip.state[plug_index]
+            orig_state = self.strip.get_state(index=plug_index)
             if orig_state == SmartPlug.STATE_OFF:
                 self.strip.set_state(value="ON", index=plug_index)
                 self.assertTrue(
-                    self.strip.state[plug_index] == SmartPlug.STATE_ON)
+                    self.strip.get_state(index=plug_index) == SmartPlug.STATE_ON)
                 self.strip.set_state(value="OFF", index=plug_index)
                 self.assertTrue(
-                    self.strip.state[plug_index] == SmartPlug.STATE_OFF)
+                    self.strip.get_state(index=plug_index) == SmartPlug.STATE_OFF)
             elif orig_state == SmartPlug.STATE_ON:
                 self.strip.set_state(value="OFF", index=plug_index)
                 self.assertTrue(
-                    self.strip.state[plug_index] == SmartPlug.STATE_OFF)
+                    self.strip.get_state(index=plug_index) == SmartPlug.STATE_OFF)
                 self.strip.set_state(value="ON", index=plug_index)
                 self.assertTrue(
-                    self.strip.state[plug_index] == SmartPlug.STATE_ON)
+                    self.strip.get_state(index=plug_index) == SmartPlug.STATE_ON)
 
     def test_turns_and_isses(self):
         # all on
         self.strip.turn_on()
-        for index, state in self.strip.is_on().items():
+        for index, state in self.strip.get_is_on().items():
             self.assertTrue(state)
-            self.assertTrue(self.strip.is_on(index=index) == state)
+            self.assertTrue(self.strip.get_is_on(index=index) == state)
 
         # all off
         self.strip.turn_off()
-        for index, state in self.strip.is_on().items():
+        for index, state in self.strip.get_is_on().items():
             self.assertFalse(state)
-            self.assertTrue(self.strip.is_on(index=index) == state)
+            self.assertTrue(self.strip.get_is_on(index=index) == state)
 
         # individual on
         for plug_index in range(self.strip.num_children):
-            original_states = self.strip.is_on()
+            original_states = self.strip.get_is_on()
             self.strip.turn_on(index=plug_index)
 
             # only target outlet should have state changed
-            for index, state in self.strip.is_on().items():
+            for index, state in self.strip.get_is_on().items():
                 if index == plug_index:
                     self.assertTrue(state != original_states[index])
                 else:
@@ -183,11 +183,11 @@ class TestSmartStripHS300(TestCase):
 
         # individual off
         for plug_index in range(self.strip.num_children):
-            original_states = self.strip.is_on()
+            original_states = self.strip.get_is_on()
             self.strip.turn_off(index=plug_index)
 
             # only target outlet should have state changed
-            for index, state in self.strip.is_on().items():
+            for index, state in self.strip.get_is_on().items():
                 if index == plug_index:
                     self.assertTrue(state != original_states[index])
                 else:
@@ -199,7 +199,7 @@ class TestSmartStripHS300(TestCase):
         with self.assertRaises(SmartStripException):
             self.strip.turn_on(index=self.strip.num_children + 100)
         with self.assertRaises(SmartStripException):
-            self.strip.is_on(index=self.strip.num_children + 100)
+            self.strip.get_is_on(index=self.strip.num_children + 100)
 
     @skip("this test will wear out your relays")
     def test_all_binary_states(self):
@@ -396,8 +396,8 @@ class TestSmartStripHS300(TestCase):
         self.strip.led = original
 
     def test_icon(self):
-        with self.assertRaises(NotImplementedError):
-            self.strip.icon
+        icon = self.strip.icon
+        assert 'icon' in icon and 'hash' in icon
 
     def test_time(self):
         self.assertTrue(isinstance(self.strip.time, datetime.datetime))
@@ -412,15 +412,15 @@ class TestSmartStripHS300(TestCase):
     def test_on_since(self):
         # out of bounds
         with self.assertRaises(SmartStripException):
-            self.strip.on_since(index=self.strip.num_children + 1)
+            self.strip.get_on_since(index=self.strip.num_children + 1)
 
         # individual on_since
         for plug_index in range(self.strip.num_children):
             self.assertTrue(isinstance(
-                self.strip.on_since(index=plug_index), datetime.datetime))
+                self.strip.get_on_since(index=plug_index), datetime.datetime))
 
         # all on_since
-        for index, plug_on_since in self.strip.on_since().items():
+        for index, plug_on_since in self.strip.get_on_since().items():
             self.assertTrue(isinstance(plug_on_since, datetime.datetime))
 
     def test_location(self):
