@@ -15,34 +15,40 @@ class TestSmartStripHS300(TestCase):
     # these schemas should go to the mainlib as
     # they can be useful when adding support for new features/devices
     # as well as to check that faked devices are operating properly.
-    sysinfo_schema = Schema({
-        "sw_ver": str,
-        "hw_ver": str,
-        "model": str,
-        "deviceId": str,
-        "oemId": str,
-        "hwId": str,
-        "rssi": Any(int, None),  # rssi can also be positive, see #54
-        "longitude": Any(All(int, Range(min=-1800000, max=1800000)), None),
-        "latitude": Any(All(int, Range(min=-900000, max=900000)), None),
-        "longitude_i": Any(All(int, Range(min=-1800000, max=1800000)), None),
-        "latitude_i": Any(All(int, Range(min=-900000, max=900000)), None),
-        "alias": str,
-        "mic_type": str,
-        "feature": str,
-        "mac": check_mac,
-        "updating": check_int_bool,
-        "led_off": check_int_bool,
-        "children": [{
-            "id": str,
-            "state": int,
+    sysinfo_schema = Schema(
+        {
+            "sw_ver": str,
+            "hw_ver": str,
+            "model": str,
+            "deviceId": str,
+            "oemId": str,
+            "hwId": str,
+            "rssi": Any(int, None),  # rssi can also be positive, see #54
+            "longitude": Any(All(int, Range(min=-1800000, max=1800000)), None),
+            "latitude": Any(All(int, Range(min=-900000, max=900000)), None),
+            "longitude_i": Any(
+                All(int, Range(min=-1800000, max=1800000)), None
+            ),
+            "latitude_i": Any(All(int, Range(min=-900000, max=900000)), None),
             "alias": str,
-            "on_time": int,
-            "next_action": {"type": int},
-        }],
-        "child_num": int,
-        "err_code": int,
-    })
+            "mic_type": str,
+            "feature": str,
+            "mac": check_mac,
+            "updating": check_int_bool,
+            "led_off": check_int_bool,
+            "children": [
+                {
+                    "id": str,
+                    "state": int,
+                    "alias": str,
+                    "on_time": int,
+                    "next_action": {"type": int},
+                }
+            ],
+            "child_num": int,
+            "err_code": int,
+        }
+    )
 
     current_consumption_schema = Schema(
         Any(
@@ -51,30 +57,30 @@ class TestSmartStripHS300(TestCase):
                 "power": Any(Coerce(float, Range(min=0)), None),
                 "total": Any(Coerce(float, Range(min=0)), None),
                 "current": Any(All(float, Range(min=0)), None),
-
                 "voltage_mv": Any(All(int, Range(min=0, max=300000)), None),
                 "power_mw": Any(Coerce(int, Range(min=0)), None),
                 "total_wh": Any(Coerce(int, Range(min=0)), None),
                 "current_ma": Any(All(int, Range(min=0)), None),
             },
-            None
+            None,
         )
     )
 
-    tz_schema = Schema({
-        "zone_str": str,
-        "dst_offset": int,
-        "index": All(int, Range(min=0)),
-        "tz_str": str,
-    })
+    tz_schema = Schema(
+        {
+            "zone_str": str,
+            "dst_offset": int,
+            "index": All(int, Range(min=0)),
+            "tz_str": str,
+        }
+    )
 
     def setUp(self):
         if STRIP_IP is not None:
             self.strip = SmartStrip(STRIP_IP)
         else:
             self.strip = SmartStrip(
-                host="127.0.0.1",
-                protocol=FakeTransportProtocol(self.SYSINFO)
+                host="127.0.0.1", protocol=FakeTransportProtocol(self.SYSINFO)
             )
 
     def tearDown(self):
@@ -89,7 +95,8 @@ class TestSmartStripHS300(TestCase):
         with self.assertRaises(SmartDeviceException):
             SmartStrip(
                 host="127.0.0.1",
-                protocol=FakeTransportProtocol(self.SYSINFO, invalid=True))
+                protocol=FakeTransportProtocol(self.SYSINFO, invalid=True),
+            )
 
     def test_query_helper(self):
         with self.assertRaises(SmartDeviceException):
@@ -134,8 +141,7 @@ class TestSmartStripHS300(TestCase):
         # out of bounds error
         with self.assertRaises(SmartStripException):
             self.strip.set_state(
-                value=SmartPlug.STATE_ON,
-                index=self.strip.num_children + 100
+                value=SmartPlug.STATE_ON, index=self.strip.num_children + 100
             )
 
         # on off
@@ -144,17 +150,25 @@ class TestSmartStripHS300(TestCase):
             if orig_state == SmartPlug.STATE_OFF:
                 self.strip.set_state(value="ON", index=plug_index)
                 self.assertTrue(
-                    self.strip.get_state(index=plug_index) == SmartPlug.STATE_ON)
+                    self.strip.get_state(index=plug_index)
+                    == SmartPlug.STATE_ON
+                )
                 self.strip.set_state(value="OFF", index=plug_index)
                 self.assertTrue(
-                    self.strip.get_state(index=plug_index) == SmartPlug.STATE_OFF)
+                    self.strip.get_state(index=plug_index)
+                    == SmartPlug.STATE_OFF
+                )
             elif orig_state == SmartPlug.STATE_ON:
                 self.strip.set_state(value="OFF", index=plug_index)
                 self.assertTrue(
-                    self.strip.get_state(index=plug_index) == SmartPlug.STATE_OFF)
+                    self.strip.get_state(index=plug_index)
+                    == SmartPlug.STATE_OFF
+                )
                 self.strip.set_state(value="ON", index=plug_index)
                 self.assertTrue(
-                    self.strip.get_state(index=plug_index) == SmartPlug.STATE_ON)
+                    self.strip.get_state(index=plug_index)
+                    == SmartPlug.STATE_ON
+                )
 
     def test_turns_and_isses(self):
         # all on
@@ -276,8 +290,9 @@ class TestSmartStripHS300(TestCase):
         if self.strip.has_emeter:
             # test with index
             for plug_index in range(self.strip.num_children):
-                emeter = self.strip.get_emeter_daily(year=1900, month=1,
-                                                     index=plug_index)
+                emeter = self.strip.get_emeter_daily(
+                    year=1900, month=1, index=plug_index
+                )
                 self.assertEqual(emeter, {})
                 if len(emeter) < 1:
                     print("no emeter daily information, skipping..")
@@ -300,20 +315,20 @@ class TestSmartStripHS300(TestCase):
             # out of bounds
             with self.assertRaises(SmartStripException):
                 self.strip.get_emeter_daily(
-                    year=1900,
-                    month=1,
-                    index=self.strip.num_children + 100
+                    year=1900, month=1, index=self.strip.num_children + 100
                 )
         else:
             self.assertEqual(
-                self.strip.get_emeter_daily(year=1900, month=1), None)
+                self.strip.get_emeter_daily(year=1900, month=1), None
+            )
 
     def test_get_emeter_monthly(self):
         if self.strip.has_emeter:
             # test with index
             for plug_index in range(self.strip.num_children):
-                emeter = self.strip.get_emeter_monthly(year=1900,
-                                                       index=plug_index)
+                emeter = self.strip.get_emeter_monthly(
+                    year=1900, index=plug_index
+                )
                 self.assertEqual(emeter, {})
                 if len(emeter) < 1:
                     print("no emeter daily information, skipping..")
@@ -336,8 +351,7 @@ class TestSmartStripHS300(TestCase):
             # out of bounds
             with self.assertRaises(SmartStripException):
                 self.strip.get_emeter_monthly(
-                    year=1900,
-                    index=self.strip.num_children + 100
+                    year=1900, index=self.strip.num_children + 100
                 )
         else:
             self.assertEqual(self.strip.get_emeter_monthly(year=1900), None)
@@ -397,7 +411,7 @@ class TestSmartStripHS300(TestCase):
 
     def test_icon(self):
         icon = self.strip.icon
-        assert 'icon' in icon and 'hash' in icon
+        assert "icon" in icon and "hash" in icon
 
     def test_time(self):
         self.assertTrue(isinstance(self.strip.time, datetime.datetime))
@@ -416,8 +430,12 @@ class TestSmartStripHS300(TestCase):
 
         # individual on_since
         for plug_index in range(self.strip.num_children):
-            self.assertTrue(isinstance(
-                self.strip.get_on_since(index=plug_index), datetime.datetime))
+            self.assertTrue(
+                isinstance(
+                    self.strip.get_on_since(index=plug_index),
+                    datetime.datetime,
+                )
+            )
 
         # all on_since
         for index, plug_on_since in self.strip.get_on_since().items():
@@ -428,10 +446,11 @@ class TestSmartStripHS300(TestCase):
         self.sysinfo_schema(self.strip.location)
 
     def test_rssi(self):
-        self.sysinfo_schema({'rssi': self.strip.rssi})  # wrapping for vol
+        self.sysinfo_schema({"rssi": self.strip.rssi})  # wrapping for vol
 
     def test_mac(self):
         self.sysinfo_schema({'mac': self.strip.mac})  # wrapping for vol
 
     def test_repr(self):
         repr(self.strip)
+

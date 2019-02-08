@@ -279,7 +279,9 @@ class FakeTransportProtocol(TPLinkSmartHomeProtocol):
         self.proto = proto
 
     def set_alias(self, x, child_ids=[]):
-        _LOGGER.debug("Setting alias to %s, child_ids: %s", x["alias"], child_ids)
+        _LOGGER.debug(
+            "Setting alias to %s, child_ids: %s", x["alias"], child_ids
+        )
         if child_ids:
             for child in self.proto["system"]["get_sysinfo"]["children"]:
                 if child["id"] in child_ids:

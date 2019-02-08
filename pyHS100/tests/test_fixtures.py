@@ -36,7 +36,10 @@ def test_plug_sysinfo(dev):
 
     assert dev.model is not None
 
-    assert dev.device_type == DeviceType.Plug or dev.device_type == DeviceType.Strip
+    assert (
+        dev.device_type == DeviceType.Plug
+        or dev.device_type == DeviceType.Strip
+    )
     assert dev.is_plug or dev.is_strip
 
 
@@ -56,7 +59,9 @@ def test_state_info(dev):
 
 
 def test_invalid_connection(dev):
-    with patch.object(FakeTransportProtocol, "query", side_effect=SmartDeviceException):
+    with patch.object(
+        FakeTransportProtocol, "query", side_effect=SmartDeviceException
+    ):
         with pytest.raises(SmartDeviceException):
             dev.is_on
 
