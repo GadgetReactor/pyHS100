@@ -569,6 +569,10 @@ class SmartDevice:
     def is_plug(self) -> bool:
         return self._device_type == DeviceType.Plug
 
+    @property
+    def is_strip(self) -> bool:
+        return self._device_type == DeviceType.Strip
+
     def __repr__(self):
         is_on = self.is_on
         if callable(is_on):

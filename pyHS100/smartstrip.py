@@ -3,7 +3,7 @@ import logging
 from typing import Any, Dict, Optional, Union
 from deprecation import deprecated
 
-from pyHS100 import SmartPlug, SmartDeviceException, EmeterStatus
+from pyHS100 import SmartPlug, SmartDeviceException, EmeterStatus, DeviceType
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -39,6 +39,7 @@ class SmartStrip(SmartPlug):
     ) -> None:
         SmartPlug.__init__(self, host, protocol)
         self.emeter_type = "emeter"
+        self._device_type = DeviceType.Strip
         self.plugs = {}
         children = self.sys_info["children"]
         self.num_children = len(children)
