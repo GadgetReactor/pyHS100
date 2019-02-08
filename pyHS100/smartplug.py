@@ -26,10 +26,13 @@ class SmartPlug(SmartDevice):
     Errors reported by the device are raised as SmartDeviceExceptions,
     and should be handled by the user of the library.
     """
-    def __init__(self,
-                 host: str,
-                 protocol: 'TPLinkSmartHomeProtocol' = None,
-                 context: str = None) -> None:
+
+    def __init__(
+        self,
+        host: str,
+        protocol: "TPLinkSmartHomeProtocol" = None,
+        context: str = None,
+    ) -> None:
         SmartDevice.__init__(self, host, protocol)
         self.emeter_type = "emeter"
         self._device_type = DeviceType.Plug
@@ -81,7 +84,7 @@ class SmartPlug(SmartDevice):
         if not self.is_dimmable:
             raise SmartDeviceException("Device is not dimmable.")
 
-        return int(self.sys_info['brightness'])
+        return int(self.sys_info["brightness"])
 
     @brightness.setter  # type: ignore
     @deprecated(details="use set_brightness()")
@@ -102,12 +105,14 @@ class SmartPlug(SmartDevice):
             raise SmartDeviceException("Device is not dimmable.")
 
         if not isinstance(value, int):
-            raise ValueError("Brightness must be integer, "
-                             "not of %s.", type(value))
+            raise ValueError(
+                "Brightness must be integer, " "not of %s.", type(value)
+            )
         elif 0 < value <= 100:
             self.turn_on()
-            self._query_helper("smartlife.iot.dimmer", "set_brightness",
-                               {"brightness": value})
+            self._query_helper(
+                "smartlife.iot.dimmer", "set_brightness", {"brightness": value}
+            )
         else:
             raise ValueError("Brightness value %s is not valid." % value)
 
@@ -127,7 +132,7 @@ class SmartPlug(SmartDevice):
         :return: True if energy meter is available
                  False otherwise
         """
-        features = self.sys_info['feature'].split(':')
+        features = self.sys_info["feature"].split(":")
         return "ENE" in features
 
     @property
@@ -136,7 +141,7 @@ class SmartPlug(SmartDevice):
 
         :return: True if device is on, False otherwise
         """
-        return bool(self.sys_info['relay_state'])
+        return bool(self.sys_info["relay_state"])
 
     def turn_on(self):
         """Turn the switch on.
@@ -198,10 +203,7 @@ class SmartPlug(SmartDevice):
         :return: Switch information dict, keys in user-presentable form.
         :rtype: dict
         """
-        info = {
-            'LED state': self.led,
-            'On since': self.on_since
-        }
+        info = {"LED state": self.led, "On since": self.on_since}
         if self.is_dimmable:
             info["Brightness"] = self.brightness
         return info

@@ -2,7 +2,16 @@ from ..protocol import TPLinkSmartHomeProtocol
 from .. import SmartDeviceException
 import logging
 import re
-from voluptuous import Schema, Range, All, Any, Coerce, Invalid, Optional, REMOVE_EXTRA
+from voluptuous import (
+    Schema,
+    Range,
+    All,
+    Any,
+    Coerce,
+    Invalid,
+    Optional,
+    REMOVE_EXTRA,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -34,7 +43,12 @@ def lb_dev_state(x):
 
 
 TZ_SCHEMA = Schema(
-    {"zone_str": str, "dst_offset": int, "index": All(int, Range(min=0)), "tz_str": str}
+    {
+        "zone_str": str,
+        "dst_offset": int,
+        "index": All(int, Range(min=0)),
+        "tz_str": str,
+    }
 )
 
 CURRENT_CONSUMPTION_SCHEMA = Schema(
@@ -415,7 +429,9 @@ class FakeTransportProtocol(TPLinkSmartHomeProtocol):
 
         params = request[target][cmd]
         _LOGGER.debug(
-            "Going to execute {}.{} (params: {}).. ".format(target, cmd, params)
+            "Going to execute {}.{} (params: {}).. ".format(
+                target, cmd, params
+            )
         )
 
         if callable(proto[target][cmd]):

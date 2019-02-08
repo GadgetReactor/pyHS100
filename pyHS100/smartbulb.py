@@ -54,9 +54,10 @@ class SmartBulb(SmartDevice):
     Errors reported by the device are raised as SmartDeviceExceptions,
     and should be handled by the user of the library.
     """
-    def __init__(self,
-                 host: str,
-                 protocol: TPLinkSmartHomeProtocol = None) -> None:
+
+    def __init__(
+        self, host: str, protocol: TPLinkSmartHomeProtocol = None
+    ) -> None:
         SmartDevice.__init__(self, host, protocol)
         self.emeter_type = "smartlife.iot.common.emeter"
         self._device_type = DeviceType.Bulb
@@ -68,7 +69,7 @@ class SmartBulb(SmartDevice):
         :return: True if the bulb supports color changes, False otherwise
         :rtype: bool
         """
-        return bool(self.sys_info['is_color'])
+        return bool(self.sys_info["is_color"])
 
     @property
     def is_dimmable(self) -> bool:
@@ -77,7 +78,7 @@ class SmartBulb(SmartDevice):
         :return: True if the bulb supports brightness changes, False otherwise
         :rtype: bool
         """
-        return bool(self.sys_info['is_dimmable'])
+        return bool(self.sys_info["is_dimmable"])
 
     @property
     def is_variable_color_temp(self) -> bool:
@@ -87,7 +88,7 @@ class SmartBulb(SmartDevice):
         otherwise
         :rtype: bool
         """
-        return bool(self.sys_info['is_variable_color_temp'])
+        return bool(self.sys_info["is_variable_color_temp"])
 
     @property
     def valid_temperature_range(self) -> Tuple[int, int]:
@@ -99,19 +100,23 @@ class SmartBulb(SmartDevice):
         if not self.is_variable_color_temp:
             return (0, 0)
         for model, temp_range in TPLINK_KELVIN.items():
-            if re.match(model, self.sys_info['model']):
+            if re.match(model, self.sys_info["model"]):
                 return temp_range
         return (0, 0)
 
     def get_light_state(self) -> Dict:
         """Query the light state."""
-        return self._query_helper("smartlife.iot.smartbulb.lightingservice",
-                                  "get_light_state")
+        return self._query_helper(
+            "smartlife.iot.smartbulb.lightingservice", "get_light_state"
+        )
 
     def set_light_state(self, state: Dict) -> Dict:
         """Set the light state."""
-        return self._query_helper("smartlife.iot.smartbulb.lightingservice",
-                                  "transition_light_state", state)
+        return self._query_helper(
+            "smartlife.iot.smartbulb.lightingservice",
+            "transition_light_state",
+            state,
+        )
 
     @property
     def hsv(self) -> Tuple[int, int, int]:
@@ -126,13 +131,13 @@ class SmartBulb(SmartDevice):
 
         light_state = self.get_light_state()
         if not self.is_on:
-            hue = light_state['dft_on_state']['hue']
-            saturation = light_state['dft_on_state']['saturation']
-            value = light_state['dft_on_state']['brightness']
+            hue = light_state["dft_on_state"]["hue"]
+            saturation = light_state["dft_on_state"]["saturation"]
+            value = light_state["dft_on_state"]["brightness"]
         else:
-            hue = light_state['hue']
-            saturation = light_state['saturation']
-            value = light_state['brightness']
+            hue = light_state["hue"]
+            saturation = light_state["saturation"]
+            value = light_state["brightness"]
 
         return hue, saturation, value
 
@@ -144,8 +149,9 @@ class SmartBulb(SmartDevice):
     def _raise_for_invalid_brightness(self, value):
         if not isinstance(value, int) or not (0 <= value <= 100):
             raise ValueError(
-                'Invalid brightness value: {} '
-                '(valid range: 0-100%)'.format(value))
+                "Invalid brightness value: {} "
+                "(valid range: 0-100%)".format(value)
+            )
 
     def set_hsv(self, hue: int, saturation: int, value: int):
         """Set new HSV.
@@ -157,13 +163,14 @@ class SmartBulb(SmartDevice):
 
         if not isinstance(state[0], int) or not (0 <= state[0] <= 360):
             raise ValueError(
-                'Invalid hue value: {} '
+                "Invalid hue value: {} " "(valid range: 0-359)".format(hue)
                     '(valid range: 0-360)'.format(state[0]))
 
         if not isinstance(saturation, int) or not (0 <= saturation <= 100):
             raise ValueError(
-                'Invalid saturation value: {} '
-                '(valid range: 0-100%)'.format(saturation))
+                "Invalid saturation value: {} "
+                "(valid range: 0-100%)".format(saturation)
+            )
 
         self._raise_for_invalid_brightness(value)
 
@@ -171,8 +178,8 @@ class SmartBulb(SmartDevice):
             "hue": hue,
             "saturation": saturation,
             "brightness": value,
-            "color_temp": 0
-            }
+            "color_temp": 0,
+        }
         self.set_light_state(light_state)
 
     @property
@@ -187,9 +194,9 @@ class SmartBulb(SmartDevice):
 
         light_state = self.get_light_state()
         if not self.is_on:
-            return int(light_state['dft_on_state']['color_temp'])
+            return int(light_state["dft_on_state"]["color_temp"])
         else:
-            return int(light_state['color_temp'])
+            return int(light_state["color_temp"])
 
     @color_temp.setter  # type: ignore
     @deprecated(details="use set_color_temp")
@@ -204,14 +211,16 @@ class SmartBulb(SmartDevice):
         if not self.is_variable_color_temp:
             raise SmartDeviceException("Bulb does not support colortemp.")
 
-        if temp < self.valid_temperature_range[0] or \
-                temp > self.valid_temperature_range[1]:
-            raise ValueError("Temperature should be between {} "
-                             "and {}".format(*self.valid_temperature_range))
+        if (
+            temp < self.valid_temperature_range[0]
+            or temp > self.valid_temperature_range[1]
+        ):
+            raise ValueError(
+                "Temperature should be between {} "
+                "and {}".format(*self.valid_temperature_range)
+            )
 
-        light_state = {
-            "color_temp": temp,
-        }
+        light_state = {"color_temp": temp}
         self.set_light_state(light_state)
 
     @property
@@ -226,9 +235,9 @@ class SmartBulb(SmartDevice):
 
         light_state = self.get_light_state()
         if not self.is_on:
-            return int(light_state['dft_on_state']['brightness'])
+            return int(light_state["dft_on_state"]["brightness"])
         else:
-            return int(light_state['brightness'])
+            return int(light_state["brightness"])
 
     @brightness.setter  # type: ignore
     @deprecated(details="use set_brightness")
@@ -245,9 +254,7 @@ class SmartBulb(SmartDevice):
 
         self._raise_for_invalid_brightness(brightness)
 
-        light_state = {
-            "brightness": brightness,
-        }
+        light_state = {"brightness": brightness}
         self.set_light_state(light_state)
 
     @property  # type: ignore
@@ -281,9 +288,7 @@ class SmartBulb(SmartDevice):
         else:
             raise ValueError
 
-        light_state = {
-            "on_off": new_state,
-        }
+        light_state = {"on_off": new_state}
         self.set_light_state(light_state)
 
     @property
@@ -294,8 +299,8 @@ class SmartBulb(SmartDevice):
         :rtype: dict
         """
         info = {
-            'Brightness': self.brightness,
-            'Is dimmable': self.is_dimmable,
+            "Brightness": self.brightness,
+            "Is dimmable": self.is_dimmable,
         }  # type: Dict[str, Any]
         if self.is_variable_color_temp:
             info["Color temperature"] = self.color_temp
@@ -309,7 +314,7 @@ class SmartBulb(SmartDevice):
     def is_on(self) -> bool:
         """Return whether the device is on."""
         light_state = self.get_light_state()
-        return bool(light_state['on_off'])
+        return bool(light_state["on_off"])
 
     def turn_off(self) -> None:
         """Turn the bulb off."""

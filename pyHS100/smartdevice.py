@@ -28,6 +28,7 @@ _LOGGER = logging.getLogger(__name__)
 
 class DeviceType(Enum):
     """Device type enum."""
+
     Plug = 1
     Bulb = 2
     Strip = 3
@@ -49,10 +50,18 @@ class EmeterStatus(dict):
     """
 
     def __getitem__(self, item):
-        valid_keys = ['voltage_mv', 'power_mw', 'current_ma',
-                      'energy_wh', 'total_wh',
-                      'voltage', 'power', 'current', 'total',
-                      'energy']
+        valid_keys = [
+            "voltage_mv",
+            "power_mw",
+            "current_ma",
+            "energy_wh",
+            "total_wh",
+            "voltage",
+            "power",
+            "current",
+            "total",
+            "energy",
+        ]
 
         # 1. if requested data is available, return it
         if item in super().keys():
@@ -61,15 +70,16 @@ class EmeterStatus(dict):
         else:
             if item not in valid_keys:
                 raise KeyError(item)
-            if '_' in item:  # upscale
-                return super().__getitem__(item[:item.find('_')]) * 10**3
+            if "_" in item:  # upscale
+                return super().__getitem__(item[: item.find("_")]) * 10 ** 3
             else:  # downscale
                 for i in super().keys():
                     if i.startswith(item):
-                        return self.__getitem__(i) / 10**3
+                        return self.__getitem__(i) / 10 ** 3
 
-                raise SmartDeviceException("Unable to find a value for '%s'" %
-                                           item)
+                raise SmartDeviceException(
+                    "Unable to find a value for '%s'" % item
+                )
 
 
 class SmartDevice:
@@ -78,10 +88,12 @@ class SmartDevice:
     STATE_ON = "ON"
     STATE_OFF = "OFF"
 
-    def __init__(self,
-                 host: str,
-                 protocol: Optional[TPLinkSmartHomeProtocol] = None,
-                 context: str = None) -> None:
+    def __init__(
+        self,
+        host: str,
+        protocol: Optional[TPLinkSmartHomeProtocol] = None,
+        context: str = None,
+    ) -> None:
         """Create a new SmartDevice instance.
 
         :param str host: host name or ip address on which the device listens
@@ -96,10 +108,9 @@ class SmartDevice:
         self.num_children = 0
         self._device_type = DeviceType.Unknown
 
-    def _query_helper(self,
-                      target: str,
-                      cmd: str,
-                      arg: Optional[Dict] = None) -> Any:
+    def _query_helper(
+        self, target: str, cmd: str, arg: Optional[Dict] = None
+    ) -> Any:
         """Handle result unwrapping and error handling.
 
         :param target: Target system {system, time, emeter, ..}
@@ -112,31 +123,34 @@ class SmartDevice:
         if self.context is None:
             request = {target: {cmd: arg}}
         else:
-            request = {"context": {"child_ids": [self.context]},
-                       target: {cmd: arg}}
+            request = {
+                "context": {"child_ids": [self.context]},
+                target: {cmd: arg},
+            }
         if arg is None:
             arg = {}
         try:
-            response = self.protocol.query(
-                host=self.host,
-                request=request,
-            )
+            response = self.protocol.query(host=self.host, request=request)
         except Exception as ex:
-            raise SmartDeviceException('Communication error on %s:%s' % (target, cmd)) from ex
+            raise SmartDeviceException(
+                "Communication error on %s:%s" % (target, cmd)
+            ) from ex
 
         if target not in response:
-            raise SmartDeviceException("No required {} in response: {}"
-                                       .format(target, response))
+            raise SmartDeviceException(
+                "No required {} in response: {}".format(target, response)
+            )
 
         result = response[target]
         if "err_code" in result and result["err_code"] != 0:
-            raise SmartDeviceException("Error on {} {}: {}"
-                                       .format(target, cmd, result))
+            raise SmartDeviceException(
+                "Error on {}.{}: {}".format(target, cmd, result)
+            )
 
         if cmd not in result:
-            raise SmartDeviceException("No command in response: {}"
-                                       .format(response))
-
+            raise SmartDeviceException(
+                "No command in response: {}".format(response)
+            )
         result = result[cmd]
         if "err_code" in result and result["err_code"] != 0:
             raise SmartDeviceException("Error on {} {}: {}"
@@ -181,7 +195,7 @@ class SmartDevice:
         :rtype: str
         :raises SmartDeviceException: on error
         """
-        return str(self.sys_info['model'])
+        return str(self.sys_info["model"])
 
     @property
     def alias(self) -> str:
@@ -190,7 +204,7 @@ class SmartDevice:
         :return: Device name aka alias.
         :rtype: str
         """
-        return str(self.sys_info['alias'])
+        return str(self.sys_info["alias"])
 
     def get_alias(self) -> str:
         return self.alias
@@ -246,8 +260,14 @@ class SmartDevice:
         """
         try:
             res = self._query_helper("time", "get_time")
-            return datetime.datetime(res["year"], res["month"], res["mday"],
-                                     res["hour"], res["min"], res["sec"])
+            return datetime.datetime(
+                res["year"],
+                res["month"],
+                res["mday"],
+                res["hour"],
+                res["min"],
+                res["sec"],
+            )
         except SmartDeviceException:
             return None
 
@@ -302,8 +322,18 @@ class SmartDevice:
         :return: Information about hardware
         :rtype: dict
         """
-        keys = ["sw_ver", "hw_ver", "mac", "mic_mac", "type",
-                "mic_type", "hwId", "fwId", "oemId", "dev_name"]
+        keys = [
+            "sw_ver",
+            "hw_ver",
+            "mac",
+            "mic_mac",
+            "type",
+            "mic_type",
+            "hwId",
+            "fwId",
+            "oemId",
+            "dev_name",
+        ]
         info = self.sys_info
         return {key: info[key] for key in keys if key in info}
 
@@ -315,8 +345,7 @@ class SmartDevice:
         :rtype: dict
         """
         info = self.sys_info
-        loc = {"latitude": None,
-               "longitude": None}
+        loc = {"latitude": None, "longitude": None}
 
         if "latitude" in info and "longitude" in info:
             loc["latitude"] = info["latitude"]
@@ -349,14 +378,16 @@ class SmartDevice:
         """
         info = self.sys_info
 
-        if 'mac' in info:
+        if "mac" in info:
             return str(info["mac"])
-        elif 'mic_mac' in info:
-            return ':'.join(format(s, '02x') for s
-                            in bytes.fromhex(info["mic_mac"]))
+        elif "mic_mac" in info:
+            return ":".join(
+                format(s, "02x") for s in bytes.fromhex(info["mic_mac"])
+            )
 
-        raise SmartDeviceException("Unknown mac, please submit a bug "
-                                   "with sysinfo output.")
+        raise SmartDeviceException(
+            "Unknown mac, please submit a bug " "with sysinfo output."
+        )
 
     @mac.setter
     @deprecated(details="use set_mac")
@@ -382,13 +413,13 @@ class SmartDevice:
         if not self.has_emeter:
             raise SmartDeviceException("Device has no emeter")
 
-        return EmeterStatus(self._query_helper(self.emeter_type,
-                                               "get_realtime"))
+        return EmeterStatus(
+            self._query_helper(self.emeter_type, "get_realtime")
+        )
 
-    def get_emeter_daily(self,
-                         year: int = None,
-                         month: int = None,
-                         kwh: bool = True) -> Dict:
+    def get_emeter_daily(
+        self, year: int = None, month: int = None, kwh: bool = True
+    ) -> Dict:
         """Retrieve daily statistics for a given month.
 
         :param year: year for which to retrieve statistics (default: this year)
@@ -408,21 +439,20 @@ class SmartDevice:
         if month is None:
             month = datetime.datetime.now().month
 
-        response = self._query_helper(self.emeter_type, "get_daystat",
-                                      {'month': month, 'year': year})
+        response = self._query_helper(
+            self.emeter_type, "get_daystat", {"month": month, "year": year}
+        )
         response = [EmeterStatus(**x) for x in response["day_list"]]
 
-        key = 'energy_wh'
+        key = "energy_wh"
         if kwh:
-            key = 'energy'
+            key = "energy"
 
-        data = {entry['day']: entry[key]
-                for entry in response}
+        data = {entry["day"]: entry[key] for entry in response}
 
         return data
 
-    def get_emeter_monthly(self, year: int = None,
-                           kwh: bool = True) -> Dict:
+    def get_emeter_monthly(self, year: int = None, kwh: bool = True) -> Dict:
         """Retrieve monthly statistics for a given year.
 
         :param year: year for which to retrieve statistics (default: this year)
@@ -438,16 +468,16 @@ class SmartDevice:
         if year is None:
             year = datetime.datetime.now().year
 
-        response = self._query_helper(self.emeter_type, "get_monthstat",
-                                      {'year': year})
+        response = self._query_helper(
+            self.emeter_type, "get_monthstat", {"year": year}
+        )
         response = [EmeterStatus(**x) for x in response["month_list"]]
 
-        key = 'energy_wh'
+        key = "energy_wh"
         if kwh:
-            key = 'energy'
+            key = "energy"
 
-        return {entry['month']: entry[key]
-                for entry in response}
+        return {entry["month"]: entry[key] for entry in response}
 
     def erase_emeter_stats(self) -> bool:
         """Erase energy meter statistics.
@@ -477,7 +507,7 @@ class SmartDevice:
             raise SmartDeviceException("Device has no emeter")
 
         response = EmeterStatus(self.get_emeter_realtime())
-        return response['power']
+        return response["power"]
 
     def reboot(self, delay=1) -> None:
         """Reboot the device.

@@ -3,7 +3,6 @@ import datetime
 from unittest.mock import patch
 
 import pytest
-from os.path import basename
 
 from pyHS100 import DeviceType, SmartStripException, SmartDeviceException
 from .newfakes import (
@@ -471,17 +470,17 @@ def test_children_bounds(dev):
 @strip
 def test_children_alias(dev):
     original = dev.get_alias()
-    for plug in range(dev.num_children):
-        dev.set_alias(alias=test_alias, index=plug)
-        assert dev.get_alias(index=plug) == test_alias
-        dev.set_alias(alias=original[plug], index=plug)
-        assert dev.get_alias(index=plug) == original[plug]
+    for idx in range(dev.num_children):
+        dev.set_alias(alias=test_alias, index=idx)
+        assert dev.get_alias(index=idx) == test_alias
+        dev.set_alias(alias=original[idx], index=idx)
+        assert dev.get_alias(index=idx) == original[idx]
 
 
 @strip
 def test_children_on_since(dev):
-    for plug in range(dev.num_children):
-        assert dev.get_on_since(index=plug)
+    for idx in range(dev.num_children):
+        assert dev.get_on_since(index=idx)
 
 
 @pytest.mark.skip("this test will wear out your relays")

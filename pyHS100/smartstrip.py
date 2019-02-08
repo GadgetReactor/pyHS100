@@ -10,6 +10,7 @@ _LOGGER = logging.getLogger(__name__)
 
 class SmartStripException(SmartDeviceException):
     """SmartStripException gets raised for errors specific to the smart strip."""
+
     pass
 
 
@@ -33,17 +34,18 @@ class SmartStrip(SmartPlug):
     and should be handled by the user of the library.
     """
 
-    def __init__(self,
-                 host: str,
-                 protocol: 'TPLinkSmartHomeProtocol' = None) -> None:
+    def __init__(
+        self, host: str, protocol: "TPLinkSmartHomeProtocol" = None
+    ) -> None:
         SmartPlug.__init__(self, host, protocol)
         self.emeter_type = "emeter"
         self.plugs = {}
         children = self.sys_info["children"]
         self.num_children = len(children)
         for plug in range(self.num_children):
-            self.plugs[plug] = SmartPlug(host, protocol,
-                                         context=children[plug]["id"])
+            self.plugs[plug] = SmartPlug(
+                host, protocol, context=children[plug]["id"]
+            )
 
     def raise_for_index(self, index: int):
         """
@@ -53,8 +55,9 @@ class SmartStrip(SmartPlug):
         :raises SmartStripException: index out of bounds
         """
         if index not in range(self.num_children):
-            raise SmartStripException("plug index of %d "
-                                      "is out of bounds" % index)
+            raise SmartStripException(
+                "plug index of %d " "is out of bounds" % index
+            )
 
     @property
     @deprecated(details="use is_on, get_is_on()")
@@ -81,7 +84,9 @@ class SmartStrip(SmartPlug):
             elif relay_state == 1:
                 switch_state = SmartPlug.STATE_ON
             else:
-                raise SmartStripException("Unknown relay state: %s" % relay_state)
+                raise SmartStripException(
+                    "Unknown relay state: %s" % relay_state
+                )
 
             states[plug] = switch_state
 
@@ -205,9 +210,9 @@ class SmartStrip(SmartPlug):
 
             for plug in range(self.num_children):
                 child_ontime = children[plug]["on_time"]
-                on_since[plug] = \
-                    datetime.datetime.now() - \
-                    datetime.timedelta(seconds=child_ontime)
+                on_since[plug] = datetime.datetime.now() - datetime.timedelta(
+                    seconds=child_ontime
+                )
             return on_since
         else:
             self.raise_for_index(index)
@@ -328,12 +333,14 @@ class SmartStrip(SmartPlug):
         self.raise_for_index(index)
         self.plugs[index].set_alias(alias)
 
-    def get_emeter_daily(self,
-                         year: int = None,
-                         month: int = None,
-                         kwh: bool = True,
-                         *,
-                         index: int = -1) -> Dict:
+    def get_emeter_daily(
+        self,
+        year: int = None,
+        month: int = None,
+        kwh: bool = True,
+        *,
+        index: int = -1
+    ) -> Dict:
         """Retrieve daily statistics for a given month
 
         :param year: year for which to retrieve statistics (default: this year)
@@ -352,21 +359,19 @@ class SmartStrip(SmartPlug):
         emeter_daily = {}
         if index < 0:
             for plug in range(self.num_children):
-                emeter_daily = self.plugs[plug].get_emeter_daily(year=year,
-                                                                 month=month,
-                                                                 kwh=kwh)
+                emeter_daily = self.plugs[plug].get_emeter_daily(
+                    year=year, month=month, kwh=kwh
+                )
             return emeter_daily
         else:
             self.raise_for_index(index)
-            return self.plugs[index].get_emeter_daily(year=year,
-                                                      month=month,
-                                                      kwh=kwh)
+            return self.plugs[index].get_emeter_daily(
+                year=year, month=month, kwh=kwh
+            )
 
-    def get_emeter_monthly(self,
-                           year: int = None,
-                           kwh: bool = True,
-                           *,
-                           index: int = -1) -> Dict:
+    def get_emeter_monthly(
+        self, year: int = None, kwh: bool = True, *, index: int = -1
+    ) -> Dict:
         """Retrieve monthly statistics for a given year.
 
         :param year: year for which to retrieve statistics (default: this year)
@@ -383,13 +388,13 @@ class SmartStrip(SmartPlug):
         emeter_monthly = {}
         if index < 0:
             for plug in range(self.num_children):
-                emeter_monthly = self.plugs[plug].get_emeter_monthly(year=year,
-                                                                     kwh=kwh)
+                emeter_monthly = self.plugs[plug].get_emeter_monthly(
+                    year=year, kwh=kwh
+                )
             return emeter_monthly
         else:
             self.raise_for_index(index)
-            return self.plugs[index].get_emeter_monthly(year=year,
-                                                        kwh=kwh)
+            return self.plugs[index].get_emeter_monthly(year=year, kwh=kwh)
 
     def erase_emeter_stats(self, *, index: int = -1) -> bool:
         """Erase energy meter statistics

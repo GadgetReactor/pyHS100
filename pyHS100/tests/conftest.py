@@ -34,7 +34,9 @@ def filter_model(filter):
     return filtered
 
 
-has_emeter = pytest.mark.parametrize("dev", filter_model(EMETER), indirect=True)
+has_emeter = pytest.mark.parametrize(
+    "dev", filter_model(EMETER), indirect=True
+)
 no_emeter = pytest.mark.parametrize(
     "dev", filter_model(ALL_DEVICES - EMETER), indirect=True
 )
@@ -43,7 +45,9 @@ bulb = pytest.mark.parametrize("dev", filter_model(BULBS), indirect=True)
 plug = pytest.mark.parametrize("dev", filter_model(PLUGS), indirect=True)
 strip = pytest.mark.parametrize("dev", filter_model(STRIPS), indirect=True)
 
-dimmable = pytest.mark.parametrize("dev", filter_model(DIMMABLE), indirect=True)
+dimmable = pytest.mark.parametrize(
+    "dev", filter_model(DIMMABLE), indirect=True
+)
 non_dimmable = pytest.mark.parametrize(
     "dev", filter_model(ALL_DEVICES - DIMMABLE), indirect=True
 )
@@ -55,7 +59,9 @@ non_variable_temp = pytest.mark.parametrize(
     "dev", filter_model(BULBS - VARIABLE_TEMP), indirect=True
 )
 
-color_bulb = pytest.mark.parametrize("dev", filter_model(COLOR_BULBS), indirect=True)
+color_bulb = pytest.mark.parametrize(
+    "dev", filter_model(COLOR_BULBS), indirect=True
+)
 non_color_bulb = pytest.mark.parametrize(
     "dev", filter_model(BULBS - COLOR_BULBS), indirect=True
 )
@@ -88,18 +94,26 @@ def dev(request):
         sysinfo = json.load(f)
         model = basename(file)
         if "LB" in model:
-            p = SmartBulb("123.123.123.123", protocol=FakeTransportProtocol(sysinfo))
+            p = SmartBulb(
+                "123.123.123.123", protocol=FakeTransportProtocol(sysinfo)
+            )
         elif "HS300" in model:
-            p = SmartStrip("123.123.123.123", protocol=FakeTransportProtocol(sysinfo))
+            p = SmartStrip(
+                "123.123.123.123", protocol=FakeTransportProtocol(sysinfo)
+            )
         elif "HS" in model:
-            p = SmartPlug("123.123.123.123", protocol=FakeTransportProtocol(sysinfo))
+            p = SmartPlug(
+                "123.123.123.123", protocol=FakeTransportProtocol(sysinfo)
+            )
         else:
             raise Exception("No tests for %s" % model)
         yield p
 
 
 def pytest_addoption(parser):
-    parser.addoption("--ip", action="store", default=None, help="run against device")
+    parser.addoption(
+        "--ip", action="store", default=None, help="run against device"
+    )
 
 
 """
