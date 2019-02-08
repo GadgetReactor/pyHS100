@@ -3,8 +3,14 @@ import logging
 import json
 from typing import Dict, Type, Optional
 
-from pyHS100 import (TPLinkSmartHomeProtocol, SmartDevice, SmartPlug,
-                     SmartBulb, SmartStrip, SmartDeviceException)
+from pyHS100 import (
+    TPLinkSmartHomeProtocol,
+    SmartDevice,
+    SmartPlug,
+    SmartBulb,
+    SmartStrip,
+    SmartDeviceException,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -25,18 +31,24 @@ class Discover:
 
 
     """
-    DISCOVERY_QUERY = {"system": {"get_sysinfo": None},
-                       "emeter": {"get_realtime": None},
-                       "smartlife.iot.dimmer": {"get_dimmer_parameters": None},
-                       "smartlife.iot.common.emeter": {"get_realtime": None},
-                       "smartlife.iot.smartbulb.lightingservice": {"get_light_state": None}}
+
+    DISCOVERY_QUERY = {
+        "system": {"get_sysinfo": None},
+        "emeter": {"get_realtime": None},
+        "smartlife.iot.dimmer": {"get_dimmer_parameters": None},
+        "smartlife.iot.common.emeter": {"get_realtime": None},
+        "smartlife.iot.smartbulb.lightingservice": {"get_light_state": None},
+    }
 
     @staticmethod
-    def discover(protocol: TPLinkSmartHomeProtocol = None,
-                 port: int = 9999,
-                 timeout: int = 3,
-                 discovery_packets = 3,
-                 return_raw=False) -> Dict[str, SmartDevice]:
+
+    def discover(
+        protocol: TPLinkSmartHomeProtocol = None,
+        port: int = 9999,
+        timeout: int = 3,
+        discovery_packets = 3,
+        return_raw=False,
+    ) -> Dict[str, SmartDevice]:
 
         """
         Sends discovery message to 255.255.255.255:9999 in order
@@ -87,9 +99,9 @@ class Discover:
         return devices
 
     @staticmethod
-    def discover_single(host: str,
-                        protocol: TPLinkSmartHomeProtocol = None
-                        ) -> Optional[SmartDevice]:
+    def discover_single(
+        host: str, protocol: TPLinkSmartHomeProtocol = None
+    ) -> Optional[SmartDevice]:
         """Discover a single device by the given IP address.
 
         :param host: Hostname of device to query
@@ -118,13 +130,17 @@ class Discover:
             elif "mic_type" in sysinfo:
                 type_ = sysinfo["mic_type"]
             else:
-                raise SmartDeviceException("Unable to find the device type field!")
+                raise SmartDeviceException(
+                    "Unable to find the device type field!"
+                )
         else:
-            raise SmartDeviceException("No 'system' nor 'get_sysinfo' in response")
+            raise SmartDeviceException(
+                "No 'system' nor 'get_sysinfo' in response"
+            )
 
-        if "smartplug" in type.lower() and "children" in sysinfo:
+        if "smartplug" in type_.lower() and "children" in sysinfo:
             return SmartStrip
-        elif "smartplug" in type.lower():
+        elif "smartplug" in type_.lower():
             return SmartPlug
         elif "smartbulb" in type_.lower():
             return SmartBulb
