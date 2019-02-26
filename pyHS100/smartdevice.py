@@ -573,6 +573,14 @@ class SmartDevice:
     def is_strip(self) -> bool:
         return self._device_type == DeviceType.Strip
 
+    @property
+    def is_dimmable(self):
+        return False
+
+    @property
+    def is_variable_color_temp(self) -> bool:
+        return False
+
     def __repr__(self):
         is_on = self.is_on
         if callable(is_on):
