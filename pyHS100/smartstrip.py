@@ -209,8 +209,7 @@ class SmartStrip(SmartPlug):
             plug_number = plug_index + 1
             if is_on[plug_index]:
                 state['Plug %d on since' % plug_number] = on_since[plug_index]
-            else:
-                state['Plug %d state' % plug_number] = self.SWITCH_STATE_OFF
+
         return state
 
     def get_emeter_realtime(self, *, index: int = -1) -> Optional[Any]:
