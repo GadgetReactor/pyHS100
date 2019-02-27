@@ -132,7 +132,7 @@ def state(ctx, dev):
     if dev.num_children > 0:
         is_on = dev.is_on()
         aliases = dev.get_alias()
-        for child in dev.num_children:
+        for child in range(dev.num_children):
             click.echo(
                 click.style("  * %s state: %s" %
                             (aliases[child],
