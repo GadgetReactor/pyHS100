@@ -16,7 +16,7 @@ class Discover:
     @staticmethod
     def discover(protocol: TPLinkSmartHomeProtocol = None,
                  port: int = 9999,
-                 timeout: int = 3, 
+                 timeout: int = 3,
                  deviceType: str = None) -> Dict[str, SmartDevice]:
         """
         Sends discovery message to 255.255.255.255:9999 in order
@@ -60,13 +60,12 @@ class Discover:
                             devices[ip] = device_class(ip)
                 elif device_class is not None:
                     devices[ip] = device_class(ip)
-                else:
-                    return None
         except socket.timeout:
             _LOGGER.debug("Got socket timeout, which is okay.")
         except Exception as ex:
             _LOGGER.error("Got exception %s", ex, exc_info=True)
         return devices
+
     @staticmethod
     def discover_single(host: str,
                         protocol: TPLinkSmartHomeProtocol = None
