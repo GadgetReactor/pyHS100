@@ -12,8 +12,8 @@ SUPPORTED_DEVICES = glob.glob(
 # TODO add HS300 tests
 # SUPPORTED_DEVICES = [dev for dev in SUPPORTED_DEVICES if 'HS300' not in dev]
 
-BULBS = {"LB100", "LB120", "LB130"}
-VARIABLE_TEMP = {"LB120", "LB130"}
+BULBS = {"LB100", "LB120", "LB130", "KL120"}
+VARIABLE_TEMP = {"LB120", "LB130", "KL120"}
 PLUGS = {"HS100", "HS105", "HS110", "HS200", "HS220", "HS300"}
 STRIPS = {"HS300"}
 COLOR_BULBS = {"LB130"}
@@ -93,7 +93,7 @@ def dev(request):
     with open(file) as f:
         sysinfo = json.load(f)
         model = basename(file)
-        if "LB" in model:
+        if "LB" in model or "KL" in model:
             p = SmartBulb(
                 "123.123.123.123", protocol=FakeTransportProtocol(sysinfo)
             )
