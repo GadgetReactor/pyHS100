@@ -35,9 +35,9 @@ class SmartStrip(SmartPlug):
     """
 
     def __init__(
-        self, host: str, protocol: "TPLinkSmartHomeProtocol" = None
+        self, host: str, protocol: "TPLinkSmartHomeProtocol" = None, cache_ttl: int = 3
     ) -> None:
-        SmartPlug.__init__(self, host, protocol)
+        SmartPlug.__init__(self, host=host, protocol=protocol, cache_ttl=cache_ttl)
         self.emeter_type = "emeter"
         self._device_type = DeviceType.Strip
         self.plugs = {}
@@ -45,7 +45,8 @@ class SmartStrip(SmartPlug):
         self.num_children = len(children)
         for plug in range(self.num_children):
             self.plugs[plug] = SmartPlug(
-                host, protocol, context=children[plug]["id"]
+                host, protocol, context=children[plug]["id"],
+                cache_ttl=cache_ttl
             )
 
     def raise_for_index(self, index: int):

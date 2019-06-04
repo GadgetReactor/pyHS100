@@ -13,7 +13,7 @@ Stroetmann which is licensed under the Apache License, Version 2.0.
 You may obtain a copy of the license at
 http://www.apache.org/licenses/LICENSE-2.0
 """
-import datetime
+from datetime import datetime, timedelta
 import logging
 from collections import defaultdict
 from typing import Any, Dict, Optional
@@ -93,6 +93,7 @@ class SmartDevice:
         host: str,
         protocol: Optional[TPLinkSmartHomeProtocol] = None,
         context: str = None,
+        cache_ttl: int = 3,
     ) -> None:
         """Create a new SmartDevice instance.
 
@@ -106,7 +107,43 @@ class SmartDevice:
         self.emeter_type = "emeter"  # type: str
         self.context = context
         self.num_children = 0
+        self.cache_ttl = timedelta(seconds=cache_ttl)
+        _LOGGER.debug("Initializing %s using context %s and cache ttl %s", self.host, self.context, self.cache_ttl)
+        self.cache = defaultdict(lambda: defaultdict(lambda: None))
         self._device_type = DeviceType.Unknown
+
+    def _result_from_cache(self, target, cmd) -> Optional[Dict]:
+        """Return query result from cache if still fresh.
+        Only results from commands starting with `get_` are considered cacheable.
+
+        :param target: Target system
+        :param cmd: Command
+        :rtype: query result or None if expired.
+        """
+        _LOGGER.debug("Checking cache for %s %s", target, cmd)
+        if cmd not in self.cache[target]:
+            return None
+
+        cached = self.cache[target][cmd]
+        if cached and cached["last_updated"] is not None:
+            if cached["last_updated"] + self.cache_ttl > datetime.utcnow() and cmd.startswith("get_"):
+                _LOGGER.debug("Got cached %s %s", target, cmd)
+                return self.cache[target][cmd]
+            else:
+                _LOGGER.debug("Invalidating the cache for %s cmd %s", target, cmd)
+                for cache_entry in self.cache[target].values():
+                    cache_entry["last_updated"] = datetime.utcfromtimestamp(0)
+        return None
+
+    def _insert_to_cache(self, target: str, cmd: str, response: Dict) -> None:
+        """Internal function to add response to cache.
+
+        :param target: Target system
+        :param cmd: Command
+        :param response: Response to be cached
+        """
+        self.cache[target][cmd] = response.copy()
+        self.cache[target][cmd]["last_updated"] = datetime.utcnow()
 
     def _query_helper(
         self, target: str, cmd: str, arg: Optional[Dict] = None
@@ -127,10 +164,13 @@ class SmartDevice:
                 "context": {"child_ids": [self.context]},
                 target: {cmd: arg},
             }
-        if arg is None:
-            arg = {}
+
         try:
-            response = self.protocol.query(host=self.host, request=request)
+            response = self._result_from_cache(target, cmd)
+            if response is None:
+                _LOGGER.debug("Got no result from cache, querying the device.")
+                response = self.protocol.query(host=self.host, request=request)
+                self._insert_to_cache(target, cmd, response)
         except Exception as ex:
             raise SmartDeviceException(
                 "Communication error on %s:%s" % (target, cmd)
@@ -176,7 +216,8 @@ class SmartDevice:
         :return: System information dict.
         :rtype: dict
         """
-        return defaultdict(lambda: None, self.get_sysinfo())
+
+        return self.get_sysinfo()
 
     def get_sysinfo(self) -> Dict:
         """Retrieve system information.
@@ -251,16 +292,16 @@ class SmartDevice:
         # self.initialize()
 
     @property
-    def time(self) -> Optional[datetime.datetime]:
+    def time(self) -> Optional[datetime]:
         """Return current time from the device.
 
         :return: datetime for device's time
-        :rtype: datetime.datetime or None when not available
+        :rtype: datetime or None when not available
         :raises SmartDeviceException: on error
         """
         try:
             res = self._query_helper("time", "get_time")
-            return datetime.datetime(
+            return datetime(
                 res["year"],
                 res["month"],
                 res["mday"],
@@ -272,12 +313,12 @@ class SmartDevice:
             return None
 
     @time.setter
-    def time(self, ts: datetime.datetime) -> None:
+    def time(self, ts: datetime) -> None:
         """Set the device time.
 
         Note: this calls set_timezone() for setting.
 
-        :param datetime.datetime ts: New date and time
+        :param datetime ts: New date and time
         :return: result
         :type: dict
         :raises NotImplemented: when not implemented.
@@ -435,9 +476,9 @@ class SmartDevice:
             raise SmartDeviceException("Device has no emeter")
 
         if year is None:
-            year = datetime.datetime.now().year
+            year = datetime.now().year
         if month is None:
-            month = datetime.datetime.now().month
+            month = datetime.now().month
 
         response = self._query_helper(
             self.emeter_type, "get_daystat", {"month": month, "year": year}
@@ -466,7 +507,7 @@ class SmartDevice:
             raise SmartDeviceException("Device has no emeter")
 
         if year is None:
-            year = datetime.datetime.now().year
+            year = datetime.now().year
 
         response = self._query_helper(
             self.emeter_type, "get_monthstat", {"year": year}

@@ -93,18 +93,13 @@ def dev(request):
     with open(file) as f:
         sysinfo = json.load(f)
         model = basename(file)
+        params = {'host': '123.123.123.123', 'protocol': FakeTransportProtocol(sysinfo), 'cache_ttl': 0}
         if "LB" in model or "KL" in model:
-            p = SmartBulb(
-                "123.123.123.123", protocol=FakeTransportProtocol(sysinfo)
-            )
+            p = SmartBulb(**params)
         elif "HS300" in model:
-            p = SmartStrip(
-                "123.123.123.123", protocol=FakeTransportProtocol(sysinfo)
-            )
+            p = SmartStrip(**params)
         elif "HS" in model:
-            p = SmartPlug(
-                "123.123.123.123", protocol=FakeTransportProtocol(sysinfo)
-            )
+            p = SmartPlug(**params)
         else:
             raise Exception("No tests for %s" % model)
         yield p

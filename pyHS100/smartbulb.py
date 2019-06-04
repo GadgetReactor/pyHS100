@@ -2,6 +2,7 @@ from pyHS100 import DeviceType, SmartDevice, SmartDeviceException
 from .protocol import TPLinkSmartHomeProtocol
 from deprecation import deprecated
 import re
+from datetime import datetime
 from typing import Any, Dict, Tuple
 
 TPLINK_KELVIN = {'LB130': (2500, 9000),
@@ -55,10 +56,14 @@ class SmartBulb(SmartDevice):
     and should be handled by the user of the library.
     """
 
+    LIGHT_SERVICE = "smartlife.iot.smartbulb.lightingservice"
+
     def __init__(
-        self, host: str, protocol: TPLinkSmartHomeProtocol = None
+        self, host: str, protocol: TPLinkSmartHomeProtocol = None,
+            context: str = None,
+            cache_ttl: int = 3,
     ) -> None:
-        SmartDevice.__init__(self, host, protocol)
+        SmartDevice.__init__(self, host=host, protocol=protocol, context=context, cache_ttl=cache_ttl)
         self.emeter_type = "smartlife.iot.common.emeter"
         self._device_type = DeviceType.Bulb
 
@@ -106,14 +111,12 @@ class SmartBulb(SmartDevice):
 
     def get_light_state(self) -> Dict:
         """Query the light state."""
-        return self._query_helper(
-            "smartlife.iot.smartbulb.lightingservice", "get_light_state"
-        )
+        return self._query_helper(self.LIGHT_SERVICE, "get_light_state")
 
     def set_light_state(self, state: Dict) -> Dict:
         """Set the light state."""
         return self._query_helper(
-            "smartlife.iot.smartbulb.lightingservice",
+            self.LIGHT_SERVICE,
             "transition_light_state",
             state,
         )
