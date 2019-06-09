@@ -9,8 +9,6 @@ from pyHS100 import SmartPlug, SmartBulb, SmartStrip, Discover
 SUPPORTED_DEVICES = glob.glob(
     os.path.dirname(os.path.abspath(__file__)) + "/fixtures/*.json"
 )
-# TODO add HS300 tests
-# SUPPORTED_DEVICES = [dev for dev in SUPPORTED_DEVICES if 'HS300' not in dev]
 
 BULBS = {"LB100", "LB120", "LB130", "KL120"}
 VARIABLE_TEMP = {"LB120", "LB130", "KL120"}
@@ -105,24 +103,6 @@ def dev(request):
 
 def pytest_addoption(parser):
     parser.addoption("--ip", action="store", default=None, help="run against device")
-
-
-"""
-def pytest_generate_tests(metafunc):
-    if 'dev' in metafunc.fixturenames:
-        ip = metafunc.config.getoption("ip")
-        print("ip: %s" % ip)
-        if ip:
-            devs = ip
-        else:
-            devs = SUPPORTED_DEVICES
-        print("parametrizing dev with %s" % devs)
-        metafunc.parametrize("dev", devs)
-"""
-
-
-# @pytest.yield_fixture(scope='session')
-# def pg_server(pg_tag):
 
 
 def pytest_collection_modifyitems(config, items):
