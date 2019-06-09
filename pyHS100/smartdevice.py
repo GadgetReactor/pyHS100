@@ -77,9 +77,7 @@ class EmeterStatus(dict):
                     if i.startswith(item):
                         return self.__getitem__(i) / 10 ** 3
 
-                raise SmartDeviceException(
-                    "Unable to find a value for '%s'" % item
-                )
+                raise SmartDeviceException("Unable to find a value for '%s'" % item)
 
 
 class SmartDevice:
@@ -108,7 +106,12 @@ class SmartDevice:
         self.context = context
         self.num_children = 0
         self.cache_ttl = timedelta(seconds=cache_ttl)
-        _LOGGER.debug("Initializing %s using context %s and cache ttl %s", self.host, self.context, self.cache_ttl)
+        _LOGGER.debug(
+            "Initializing %s using context %s and cache ttl %s",
+            self.host,
+            self.context,
+            self.cache_ttl,
+        )
         self.cache = defaultdict(lambda: defaultdict(lambda: None))
         self._device_type = DeviceType.Unknown
 
@@ -126,7 +129,9 @@ class SmartDevice:
 
         cached = self.cache[target][cmd]
         if cached and cached["last_updated"] is not None:
-            if cached["last_updated"] + self.cache_ttl > datetime.utcnow() and cmd.startswith("get_"):
+            if cached[
+                "last_updated"
+            ] + self.cache_ttl > datetime.utcnow() and cmd.startswith("get_"):
                 _LOGGER.debug("Got cached %s %s", target, cmd)
                 return self.cache[target][cmd]
             else:
@@ -145,9 +150,7 @@ class SmartDevice:
         self.cache[target][cmd] = response.copy()
         self.cache[target][cmd]["last_updated"] = datetime.utcnow()
 
-    def _query_helper(
-        self, target: str, cmd: str, arg: Optional[Dict] = None
-    ) -> Any:
+    def _query_helper(self, target: str, cmd: str, arg: Optional[Dict] = None) -> Any:
         """Handle result unwrapping and error handling.
 
         :param target: Target system {system, time, emeter, ..}
@@ -160,10 +163,7 @@ class SmartDevice:
         if self.context is None:
             request = {target: {cmd: arg}}
         else:
-            request = {
-                "context": {"child_ids": [self.context]},
-                target: {cmd: arg},
-            }
+            request = {"context": {"child_ids": [self.context]}, target: {cmd: arg}}
 
         try:
             response = self._result_from_cache(target, cmd)
@@ -183,18 +183,13 @@ class SmartDevice:
 
         result = response[target]
         if "err_code" in result and result["err_code"] != 0:
-            raise SmartDeviceException(
-                "Error on {}.{}: {}".format(target, cmd, result)
-            )
+            raise SmartDeviceException("Error on {}.{}: {}".format(target, cmd, result))
 
         if cmd not in result:
-            raise SmartDeviceException(
-                "No command in response: {}".format(response)
-            )
+            raise SmartDeviceException("No command in response: {}".format(response))
         result = result[cmd]
         if "err_code" in result and result["err_code"] != 0:
-            raise SmartDeviceException("Error on {} {}: {}"
-                                       .format(target, cmd, result))
+            raise SmartDeviceException("Error on {} {}: {}".format(target, cmd, result))
 
         if "err_code" in result:
             del result["err_code"]
@@ -423,9 +418,7 @@ class SmartDevice:
         if "mac" in info:
             return str(info["mac"])
         elif "mic_mac" in info:
-            return ":".join(
-                format(s, "02x") for s in bytes.fromhex(info["mic_mac"])
-            )
+            return ":".join(format(s, "02x") for s in bytes.fromhex(info["mic_mac"]))
 
         raise SmartDeviceException(
             "Unknown mac, please submit a bug " "with sysinfo output."
@@ -455,9 +448,7 @@ class SmartDevice:
         if not self.has_emeter:
             raise SmartDeviceException("Device has no emeter")
 
-        return EmeterStatus(
-            self._query_helper(self.emeter_type, "get_realtime")
-        )
+        return EmeterStatus(self._query_helper(self.emeter_type, "get_realtime"))
 
     def get_emeter_daily(
         self, year: int = None, month: int = None, kwh: bool = True
@@ -510,9 +501,7 @@ class SmartDevice:
         if year is None:
             year = datetime.now().year
 
-        response = self._query_helper(
-            self.emeter_type, "get_monthstat", {"year": year}
-        )
+        response = self._query_helper(self.emeter_type, "get_monthstat", {"year": year})
         response = [EmeterStatus(**x) for x in response["month_list"]]
 
         key = "energy_wh"
@@ -633,4 +622,5 @@ class SmartDevice:
             self.host,
             self.alias,
             is_on,
-            self.state_information)
+            self.state_information,
+        )

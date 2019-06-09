@@ -5,10 +5,7 @@ import logging
 from pprint import pformat as pf
 
 if sys.version_info < (3, 4):
-    print(
-        "To use this script you need python 3.4 or newer! got %s"
-        % sys.version_info
-    )
+    print("To use this script you need python 3.4 or newer! got %s" % sys.version_info)
     sys.exit(1)
 
 from pyHS100 import (
@@ -85,9 +82,7 @@ def cli(ctx, ip, host, alias, debug, bulb, plug, strip):
         elif strip:
             dev = SmartStrip(host)
         else:
-            click.echo(
-                "Unable to detect type, use --strip or --bulb or --plug!"
-            )
+            click.echo("Unable to detect type, use --strip or --bulb or --plug!")
             return
         ctx.obj = dev
 
@@ -117,9 +112,7 @@ def dump_discover(save):
 def discover(ctx, timeout, discover_only, dump_raw):
     """Discover devices in the network."""
     click.echo("Discovering devices for %s seconds" % timeout)
-    found_devs = Discover.discover(
-        timeout=timeout, return_raw=dump_raw
-    ).items()
+    found_devs = Discover.discover(timeout=timeout, return_raw=dump_raw).items()
     if not discover_only:
         for ip, dev in found_devs:
             if dump_raw:
@@ -162,20 +155,25 @@ def sysinfo(dev):
 @click.pass_context
 def state(ctx, dev):
     """Print out device state and versions."""
-    click.echo(click.style("== %s - %s ==" % (dev.alias, dev.model),
-                           bold=True))
+    click.echo(click.style("== %s - %s ==" % (dev.alias, dev.model), bold=True))
 
-    click.echo(click.style("Device state: %s" % "ON" if dev.is_on else "OFF",
-                           fg="green" if dev.is_on else "red"))
+    click.echo(
+        click.style(
+            "Device state: %s" % "ON" if dev.is_on else "OFF",
+            fg="green" if dev.is_on else "red",
+        )
+    )
     if dev.num_children > 0:
         is_on = dev.is_on()
         aliases = dev.get_alias()
         for child in range(dev.num_children):
             click.echo(
-                click.style("  * %s state: %s" %
-                            (aliases[child],
-                             "ON" if is_on[child] else "OFF"),
-                            fg="green" if is_on[child] else "red"))
+                click.style(
+                    "  * %s state: %s"
+                    % (aliases[child], "ON" if is_on[child] else "OFF"),
+                    fg="green" if is_on[child] else "red",
+                )
+            )
 
     click.echo("Host/IP: %s" % dev.host)
     for k, v in dev.state_information.items():
@@ -219,12 +217,8 @@ def raw_command(dev: SmartDevice, module, command, parameters):
 
 @cli.command()
 @pass_dev
-@click.option(
-    "--year", type=click.DateTime(["%Y"]), default=None, required=False
-)
-@click.option(
-    "--month", type=click.DateTime(["%Y-%m"]), default=None, required=False
-)
+@click.option("--year", type=click.DateTime(["%Y"]), default=None, required=False)
+@click.option("--month", type=click.DateTime(["%Y-%m"]), default=None, required=False)
 @click.option("--erase", is_flag=True)
 def emeter(dev, year, month, erase):
     """Query emeter for historical consumption."""
@@ -243,9 +237,7 @@ def emeter(dev, year, month, erase):
         emeter_status = dev.get_emeter_monthly(year.year)
     elif month:
         click.echo("== For month %s of %s ==" % (month.month, month.year))
-        emeter_status = dev.get_emeter_daily(
-            year=month.year, month=month.month
-        )
+        emeter_status = dev.get_emeter_daily(year=month.year, month=month.month)
     else:
         emeter_status = dev.get_emeter_realtime()
         click.echo("== Current State ==")
@@ -258,9 +250,7 @@ def emeter(dev, year, month, erase):
 
 
 @cli.command()
-@click.argument(
-    "brightness", type=click.IntRange(0, 100), default=None, required=False
-)
+@click.argument("brightness", type=click.IntRange(0, 100), default=None, required=False)
 @pass_dev
 def brightness(dev, brightness):
     """Get or set brightness."""
@@ -276,10 +266,7 @@ def brightness(dev, brightness):
 
 @cli.command()
 @click.argument(
-    "temperature",
-    type=click.IntRange(2500, 9000),
-    default=None,
-    required=False,
+    "temperature", type=click.IntRange(2500, 9000), default=None, required=False
 )
 @pass_dev
 def temperature(dev: SmartBulb, temperature):
@@ -289,8 +276,10 @@ def temperature(dev: SmartBulb, temperature):
         if dev.valid_temperature_range != (0, 0):
             click.echo("(min: %s, max: %s)" % dev.valid_temperature_range)
         else:
-            click.echo("Temperature range unknown, please open a github issue"
-                       " or a pull request for model '%s'" % dev.model)
+            click.echo(
+                "Temperature range unknown, please open a github issue"
+                " or a pull request for model '%s'" % dev.model
+            )
     else:
         click.echo("Setting color temperature to %s" % temperature)
         dev.set_color_temp(temperature)

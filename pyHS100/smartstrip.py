@@ -4,6 +4,7 @@ from typing import Any, Dict, Optional, Union
 from deprecation import deprecated
 
 from pyHS100 import SmartPlug, SmartDeviceException, EmeterStatus, DeviceType
+from .protocol import TPLinkSmartHomeProtocol
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -35,7 +36,7 @@ class SmartStrip(SmartPlug):
     """
 
     def __init__(
-        self, host: str, protocol: "TPLinkSmartHomeProtocol" = None, cache_ttl: int = 3
+        self, host: str, protocol: TPLinkSmartHomeProtocol = None, cache_ttl: int = 3
     ) -> None:
         SmartPlug.__init__(self, host=host, protocol=protocol, cache_ttl=cache_ttl)
         self.emeter_type = "emeter"
@@ -45,8 +46,7 @@ class SmartStrip(SmartPlug):
         self.num_children = len(children)
         for plug in range(self.num_children):
             self.plugs[plug] = SmartPlug(
-                host, protocol, context=children[plug]["id"],
-                cache_ttl=cache_ttl
+                host, protocol, context=children[plug]["id"], cache_ttl=cache_ttl
             )
 
     def raise_for_index(self, index: int):
@@ -57,9 +57,7 @@ class SmartStrip(SmartPlug):
         :raises SmartStripException: index out of bounds
         """
         if index not in range(self.num_children):
-            raise SmartStripException(
-                "plug index of %d " "is out of bounds" % index
-            )
+            raise SmartStripException("plug index of %d " "is out of bounds" % index)
 
     @property
     @deprecated(details="use is_on, get_is_on()")
@@ -76,8 +74,10 @@ class SmartStrip(SmartPlug):
                   STATE_OFF
         :rtype: dict
         """
+
         def _state_for_bool(b):
             return SmartPlug.STATE_ON if b else SmartPlug.STATE_OFF
+
         is_on = self.get_is_on(index=index)
         if isinstance(is_on, bool):
             return _state_for_bool(is_on)
@@ -220,13 +220,13 @@ class SmartStrip(SmartPlug):
         :return: Strip information dict, keys in user-presentable form.
         :rtype: dict
         """
-        state = {'LED state': self.led}
+        state = {"LED state": self.led}
         is_on = self.get_is_on()
         on_since = self.get_on_since()
         for plug_index in range(self.num_children):
             plug_number = plug_index + 1
             if is_on[plug_index]:
-                state['Plug %d on since' % plug_number] = on_since[plug_index]
+                state["Plug %d on since" % plug_number] = on_since[plug_index]
 
         return state
 
@@ -328,12 +328,7 @@ class SmartStrip(SmartPlug):
         self.plugs[index].set_alias(alias)
 
     def get_emeter_daily(
-        self,
-        year: int = None,
-        month: int = None,
-        kwh: bool = True,
-        *,
-        index: int = -1
+        self, year: int = None, month: int = None, kwh: bool = True, *, index: int = -1
     ) -> Dict:
         """Retrieve daily statistics for a given month
 
@@ -359,9 +354,7 @@ class SmartStrip(SmartPlug):
             return emeter_daily
         else:
             self.raise_for_index(index)
-            return self.plugs[index].get_emeter_daily(
-                year=year, month=month, kwh=kwh
-            )
+            return self.plugs[index].get_emeter_daily(year=year, month=month, kwh=kwh)
 
     def get_emeter_monthly(
         self, year: int = None, kwh: bool = True, *, index: int = -1
@@ -382,9 +375,7 @@ class SmartStrip(SmartPlug):
         emeter_monthly = {}
         if index < 0:
             for plug in range(self.num_children):
-                emeter_monthly = self.plugs[plug].get_emeter_monthly(
-                    year=year, kwh=kwh
-                )
+                emeter_monthly = self.plugs[plug].get_emeter_monthly(year=year, kwh=kwh)
             return emeter_monthly
         else:
             self.raise_for_index(index)

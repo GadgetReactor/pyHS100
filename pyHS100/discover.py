@@ -41,12 +41,11 @@ class Discover:
     }
 
     @staticmethod
-
     def discover(
         protocol: TPLinkSmartHomeProtocol = None,
         port: int = 9999,
         timeout: int = 3,
-        discovery_packets = 3,
+        discovery_packets=3,
         return_raw=False,
     ) -> Dict[str, SmartDevice]:
 
@@ -130,13 +129,9 @@ class Discover:
             elif "mic_type" in sysinfo:
                 type_ = sysinfo["mic_type"]
             else:
-                raise SmartDeviceException(
-                    "Unable to find the device type field!"
-                )
+                raise SmartDeviceException("Unable to find the device type field!")
         else:
-            raise SmartDeviceException(
-                "No 'system' nor 'get_sysinfo' in response"
-            )
+            raise SmartDeviceException("No 'system' nor 'get_sysinfo' in response")
 
         if "smartplug" in type_.lower() and "children" in sysinfo:
             return SmartStrip

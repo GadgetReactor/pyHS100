@@ -19,14 +19,13 @@ class TPLinkSmartHomeProtocol:
     which are licensed under the Apache License, Version 2.0
     http://www.apache.org/licenses/LICENSE-2.0
     """
+
     INITIALIZATION_VECTOR = 171
     DEFAULT_PORT = 9999
     DEFAULT_TIMEOUT = 5
 
     @staticmethod
-    def query(host: str,
-              request: Union[str, Dict],
-              port: int = DEFAULT_PORT) -> Any:
+    def query(host: str, request: Union[str, Dict], port: int = DEFAULT_PORT) -> Any:
         """Request information from a TP-Link SmartHome Device.
 
         :param str host: host name or ip address of the device

@@ -5,13 +5,17 @@ import re
 from datetime import datetime
 from typing import Any, Dict, Tuple
 
-TPLINK_KELVIN = {'LB130': (2500, 9000),
-                 'LB120': (2700, 6500),
-                 'LB230': (2500, 9000),
-                 'KB130': (2500, 9000),
-                 'KL130': (2500, 9000),
-                 'KL120\(EU\)': (2700, 6500),
-                 'KL120\(US\)': (2700, 5000)}
+
+TPLINK_KELVIN = {
+    'LB130': (2500, 9000),
+    'LB120': (2700, 6500),
+    'LB230': (2500, 9000),
+    'KB130': (2500, 9000),
+    'KL130': (2500, 9000),
+    'KL120\(EU\)': (2700, 6500),
+    'KL120\(US\)': (2700, 5000)}
+}
+
 
 
 class SmartBulb(SmartDevice):
@@ -59,11 +63,15 @@ class SmartBulb(SmartDevice):
     LIGHT_SERVICE = "smartlife.iot.smartbulb.lightingservice"
 
     def __init__(
-        self, host: str, protocol: TPLinkSmartHomeProtocol = None,
-            context: str = None,
-            cache_ttl: int = 3,
+        self,
+        host: str,
+        protocol: TPLinkSmartHomeProtocol = None,
+        context: str = None,
+        cache_ttl: int = 3,
     ) -> None:
-        SmartDevice.__init__(self, host=host, protocol=protocol, context=context, cache_ttl=cache_ttl)
+        SmartDevice.__init__(
+            self, host=host, protocol=protocol, context=context, cache_ttl=cache_ttl
+        )
         self.emeter_type = "smartlife.iot.common.emeter"
         self._device_type = DeviceType.Bulb
 
@@ -115,11 +123,7 @@ class SmartBulb(SmartDevice):
 
     def set_light_state(self, state: Dict) -> Dict:
         """Set the light state."""
-        return self._query_helper(
-            self.LIGHT_SERVICE,
-            "transition_light_state",
-            state,
-        )
+        return self._query_helper(self.LIGHT_SERVICE, "transition_light_state", state)
 
     @property
     def hsv(self) -> Tuple[int, int, int]:
@@ -152,8 +156,7 @@ class SmartBulb(SmartDevice):
     def _raise_for_invalid_brightness(self, value):
         if not isinstance(value, int) or not (0 <= value <= 100):
             raise ValueError(
-                "Invalid brightness value: {} "
-                "(valid range: 0-100%)".format(value)
+                "Invalid brightness value: {} " "(valid range: 0-100%)".format(value)
             )
 
     def set_hsv(self, hue: int, saturation: int, value: int):

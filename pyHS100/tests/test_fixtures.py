@@ -36,10 +36,7 @@ def test_plug_sysinfo(dev):
 
     assert dev.model is not None
 
-    assert (
-        dev.device_type == DeviceType.Plug
-        or dev.device_type == DeviceType.Strip
-    )
+    assert dev.device_type == DeviceType.Plug or dev.device_type == DeviceType.Strip
     assert dev.is_plug or dev.is_strip
 
 
@@ -59,9 +56,7 @@ def test_state_info(dev):
 
 
 def test_invalid_connection(dev):
-    with patch.object(
-        FakeTransportProtocol, "query", side_effect=SmartDeviceException
-    ):
+    with patch.object(FakeTransportProtocol, "query", side_effect=SmartDeviceException):
         with pytest.raises(SmartDeviceException):
             dev.is_on
 
@@ -629,27 +624,33 @@ def test_children_get_emeter_monthly(dev):
 
 def test_cache(dev):
     from datetime import timedelta
+
     dev.cache_ttl = timedelta(seconds=3)
-    with patch.object(FakeTransportProtocol, 'query', wraps=dev.protocol.query) as query_mock:
+    with patch.object(
+        FakeTransportProtocol, "query", wraps=dev.protocol.query
+    ) as query_mock:
         CHECK_COUNT = 1
         # Smartstrip calls sysinfo in its __init__ to request children, so
         # the even first get call here will get its results from the cache.
         if dev.is_strip:
             CHECK_COUNT = 0
 
-        s = dev.get_sysinfo()
+        dev.get_sysinfo()
         assert query_mock.call_count == CHECK_COUNT
-        s2 = dev.get_sysinfo()
+        dev.get_sysinfo()
         assert query_mock.call_count == CHECK_COUNT
 
 
 def test_cache_invalidates(dev):
     from datetime import timedelta
+
     dev.cache_ttl = timedelta(seconds=0)
 
-    with patch.object(FakeTransportProtocol, 'query', wraps=dev.protocol.query) as query_mock:
-        s = dev.get_sysinfo()
+    with patch.object(
+        FakeTransportProtocol, "query", wraps=dev.protocol.query
+    ) as query_mock:
+        dev.get_sysinfo()
         assert query_mock.call_count == 1
-        s2 = dev.get_sysinfo()
+        dev.get_sysinfo()
         assert query_mock.call_count == 2
-        #assert query_mock.called_once()
+        # assert query_mock.called_once()

@@ -106,9 +106,7 @@ class SmartPlug(SmartDevice):
             raise SmartDeviceException("Device is not dimmable.")
 
         if not isinstance(value, int):
-            raise ValueError(
-                "Brightness must be integer, " "not of %s.", type(value)
-            )
+            raise ValueError("Brightness must be integer, " "not of %s.", type(value))
         elif 0 < value <= 100:
             self.turn_on()
             self._query_helper(
