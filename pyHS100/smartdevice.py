@@ -196,7 +196,8 @@ class SmartDevice:
             raise SmartDeviceException("Error on {} {}: {}"
                                        .format(target, cmd, result))
 
-        del result["err_code"]
+        if "err_code" in result:
+            del result["err_code"]
 
         return result
 

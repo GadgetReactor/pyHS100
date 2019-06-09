@@ -221,7 +221,7 @@ class SmartStrip(SmartPlug):
         :rtype: dict
         """
         state = {'LED state': self.led}
-        is_on = self.is_on()
+        is_on = self.get_is_on()
         on_since = self.get_on_since()
         for plug_index in range(self.num_children):
             plug_number = plug_index + 1
