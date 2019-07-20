@@ -99,7 +99,7 @@ def cli(ctx, ip, host, alias, target, debug, bulb, plug, strip):
 @click.option("--save")
 @click.pass_context
 def dump_discover(ctx, save):
-    target = ctx.params['target']
+    target = ctx.parent.params['target']
     for dev in Discover.discover(target=target, return_raw=True).values():
         model = dev["system"]["get_sysinfo"]["model"]
         hw_version = dev["system"]["get_sysinfo"]["hw_ver"]
@@ -118,7 +118,7 @@ def dump_discover(ctx, save):
 @click.pass_context
 def discover(ctx, timeout, discover_only, dump_raw):
     """Discover devices in the network."""
-    target = ctx.params['target']
+    target = ctx.parent.params['target']
     click.echo("Discovering devices for %s seconds" % timeout)
     found_devs = Discover.discover(target=target, timeout=timeout, return_raw=dump_raw).items()
     if not discover_only:
