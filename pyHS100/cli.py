@@ -41,7 +41,7 @@ pass_dev = click.make_pass_decorator(SmartDevice)
     help="The device name, or alias, of the device to connect to.",
 )
 @click.option(
-    "--target", 
+    "--target",
     default="255.255.255.255", required=False,
     help="The broadcast address to be used for discovery.",
 )
