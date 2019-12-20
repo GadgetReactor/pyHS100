@@ -86,6 +86,9 @@ class SmartDevice:
     STATE_ON = "ON"
     STATE_OFF = "OFF"
 
+    # Subclasses may override these strings if their device
+    # uses different service names.
+
     SYSTEM_SERVICE = "system"
     # On newer devices, there are two services for "system" commands.
     SYSTEM_ALT_SERVICE = "system"

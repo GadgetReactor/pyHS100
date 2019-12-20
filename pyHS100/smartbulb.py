@@ -59,6 +59,10 @@ class SmartBulb(SmartDevice):
     and should be handled by the user of the library.
     """
 
+    # Override some service names.
+    # These were taken from a KL130. Your device may be
+    # slightly different.
+
     LIGHT_SERVICE = "smartlife.iot.smartbulb.lightingservice"
     EMETER_SERVICE = "smartlife.iot.common.emeter"
     CLOUD_SERVICE = "smartlife.iot.common.cloud"
