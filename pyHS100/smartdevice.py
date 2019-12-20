@@ -288,6 +288,35 @@ class SmartDevice:
         # self.initialize()
 
     @property
+    def wifi(self) -> Dict:
+        """Return information about the wifi network that
+        this device is connected to.
+
+        :return: A dictionary containing the keys "ssid",
+                 "key_type", and "rssi"
+        :rtype: dict
+        :raises SmartDeviceException: on error
+        """
+
+        return self._query_helper("netif", "get_stainfo")
+
+    def set_wifi(self, ssid, password, key_type=3) -> None:
+        """Set the wireless network that the device will use.
+
+        This command will allow you to provision a factory-
+        fresh device without ever connecting through the
+        app.
+
+        :param ssid: SSID (name) of the network
+        :param password: The password to join the network
+        :param key_type: What kind of security to use
+                         (default=3 for WPA2)
+        :raises SmartDeviceException: on error
+        """
+
+        self._query_helper("netif", "set_stainfo", {"ssid": ssid, "password": password, "key_type": key_type})
+
+    @property
     def time(self) -> Optional[datetime]:
         """Return current time from the device.
 
