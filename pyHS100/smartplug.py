@@ -27,6 +27,8 @@ class SmartPlug(SmartDevice):
     and should be handled by the user of the library.
     """
 
+    DIMMER_SERVICE = "smartlife.iot.dimmer"
+
     def __init__(
         self,
         host: str,
@@ -110,7 +112,7 @@ class SmartPlug(SmartDevice):
         elif 0 < value <= 100:
             self.turn_on()
             self._query_helper(
-                "smartlife.iot.dimmer", "set_brightness", {"brightness": value}
+                self.DIMMER_SERVICE, "set_brightness", {"brightness": value}
             )
         else:
             raise ValueError("Brightness value %s is not valid." % value)
@@ -147,14 +149,14 @@ class SmartPlug(SmartDevice):
 
         :raises SmartDeviceException: on error
         """
-        self._query_helper("system", "set_relay_state", {"state": 1})
+        self._query_helper(self.SYSTEM_SERVICE, "set_relay_state", {"state": 1})
 
     def turn_off(self):
         """Turn the switch off.
 
         :raises SmartDeviceException: on error
         """
-        self._query_helper("system", "set_relay_state", {"state": 0})
+        self._query_helper(self.SYSTEM_SERVICE, "set_relay_state", {"state": 0})
 
     @property
     def led(self) -> bool:
@@ -176,7 +178,7 @@ class SmartPlug(SmartDevice):
         :param bool state: True to set led on, False to set led off
         :raises SmartDeviceException: on error
         """
-        self._query_helper("system", "set_led_off", {"off": int(not state)})
+        self._query_helper(self.SYSTEM_SERVICE, "set_led_off", {"off": int(not state)})
 
     @property
     def on_since(self) -> datetime.datetime:

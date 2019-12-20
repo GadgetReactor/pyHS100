@@ -60,6 +60,7 @@ class SmartBulb(SmartDevice):
     """
 
     LIGHT_SERVICE = "smartlife.iot.smartbulb.lightingservice"
+    EMETER_SERVICE = "smartlife.iot.common.emeter"
 
     def __init__(
         self,
@@ -71,7 +72,6 @@ class SmartBulb(SmartDevice):
         SmartDevice.__init__(
             self, host=host, protocol=protocol, context=context, cache_ttl=cache_ttl
         )
-        self.emeter_type = "smartlife.iot.common.emeter"
         self._device_type = DeviceType.Bulb
 
     @property

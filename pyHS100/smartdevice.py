@@ -86,6 +86,12 @@ class SmartDevice:
     STATE_ON = "ON"
     STATE_OFF = "OFF"
 
+    SYSTEM_SERVICE = "system"
+    NETIF_SERVICE = "netif"
+    CLOUD_SERVICE = "cnCloud"
+    EMETER_SERVICE = "emeter"
+    TIME_SERVICE = "time"
+
     def __init__(
         self,
         host: str,
@@ -102,7 +108,6 @@ class SmartDevice:
         if protocol is None:  # pragma: no cover
             protocol = TPLinkSmartHomeProtocol()
         self.protocol = protocol
-        self.emeter_type = "emeter"  # type: str
         self.context = context
         self.num_children = 0
         self.cache_ttl = timedelta(seconds=cache_ttl)
@@ -222,7 +227,7 @@ class SmartDevice:
         :rtype dict
         :raises SmartDeviceException: on error
         """
-        return self._query_helper("system", "get_sysinfo")
+        return self._query_helper(self.SYSTEM_SERVICE, "get_sysinfo")
 
     @property
     def model(self) -> str:
@@ -257,7 +262,7 @@ class SmartDevice:
         :param alias: New alias (name)
         :raises SmartDeviceException: on error
         """
-        self._query_helper("system", "set_dev_alias", {"alias": alias})
+        self._query_helper(self.SYSTEM_SERVICE, "set_dev_alias", {"alias": alias})
 
     @property
     def icon(self) -> Dict:
@@ -269,7 +274,7 @@ class SmartDevice:
         :rtype: dict
         :raises SmartDeviceException: on error
         """
-        return self._query_helper("system", "get_dev_icon")
+        return self._query_helper(self.SYSTEM_SERVICE, "get_dev_icon")
 
     @icon.setter
     def icon(self, icon: str) -> None:
@@ -283,7 +288,7 @@ class SmartDevice:
         """
         raise NotImplementedError()
         # here just for the sake of completeness
-        # self._query_helper("system",
+        # self._query_helper(self.SYSTEM_SERVICE,
         #                    "set_dev_icon", {"icon": "", "hash": ""})
         # self.initialize()
 
@@ -298,7 +303,7 @@ class SmartDevice:
         :raises SmartDeviceException: on error
         """
 
-        return self._query_helper("netif", "get_stainfo")
+        return self._query_helper(self.NETIF_SERVICE, "get_stainfo")
 
     def set_wifi(self, ssid, password, key_type=3) -> None:
         """Set the wireless network that the device will use.
@@ -314,7 +319,7 @@ class SmartDevice:
         :raises SmartDeviceException: on error
         """
 
-        self._query_helper("netif", "set_stainfo", {"ssid": ssid, "password": password, "key_type": key_type})
+        self._query_helper(self.NETIF_SERVICE, "set_stainfo", {"ssid": ssid, "password": password, "key_type": key_type})
 
     @property
     def time(self) -> Optional[datetime]:
@@ -325,7 +330,7 @@ class SmartDevice:
         :raises SmartDeviceException: on error
         """
         try:
-            res = self._query_helper("time", "get_time")
+            res = self._query_helper(self.TIME_SERVICE, "get_time")
             return datetime(
                 res["year"],
                 res["month"],
@@ -365,7 +370,7 @@ class SmartDevice:
         }
 
 
-        response = self._query_helper("time", "set_timezone", ts_obj)
+        response = self._query_helper(self.TIME_SERVICE, "set_timezone", ts_obj)
         self.initialize()
 
         return response
@@ -379,7 +384,7 @@ class SmartDevice:
         :rtype: dict
         :raises SmartDeviceException: on error
         """
-        return self._query_helper("time", "get_timezone")
+        return self._query_helper(self.TIME_SERVICE, "get_timezone")
 
     @property
     def hw_info(self) -> Dict:
@@ -464,7 +469,7 @@ class SmartDevice:
         :param str mac: mac in hexadecimal with colons, e.g. 01:23:45:67:89:ab
         :raises SmartDeviceException: on error
         """
-        self._query_helper("system", "set_mac_addr", {"mac": mac})
+        self._query_helper(self.SYSTEM_SERVICE, "set_mac_addr", {"mac": mac})
 
     def get_emeter_realtime(self) -> EmeterStatus:
         """Retrive current energy readings.
@@ -477,7 +482,7 @@ class SmartDevice:
         if not self.has_emeter:
             raise SmartDeviceException("Device has no emeter")
 
-        return EmeterStatus(self._query_helper(self.emeter_type, "get_realtime"))
+        return EmeterStatus(self._query_helper(self.EMETER_SERVICE, "get_realtime"))
 
     def get_emeter_daily(
         self, year: int = None, month: int = None, kwh: bool = True
@@ -502,7 +507,7 @@ class SmartDevice:
             month = datetime.now().month
 
         response = self._query_helper(
-            self.emeter_type, "get_daystat", {"month": month, "year": year}
+            self.EMETER_SERVICE, "get_daystat", {"month": month, "year": year}
         )
         response = [EmeterStatus(**x) for x in response["day_list"]]
 
@@ -530,7 +535,7 @@ class SmartDevice:
         if year is None:
             year = datetime.now().year
 
-        response = self._query_helper(self.emeter_type, "get_monthstat", {"year": year})
+        response = self._query_helper(self.EMETER_SERVICE, "get_monthstat", {"year": year})
         response = [EmeterStatus(**x) for x in response["month_list"]]
 
         key = "energy_wh"
@@ -550,7 +555,7 @@ class SmartDevice:
         if not self.has_emeter:
             raise SmartDeviceException("Device has no emeter")
 
-        self._query_helper(self.emeter_type, "erase_emeter_stat", None)
+        self._query_helper(self.EMETER_SERVICE, "erase_emeter_stat", None)
 
         # As query_helper raises exception in case of failure, we have
         # succeeded when we are this far.
@@ -578,7 +583,7 @@ class SmartDevice:
         :param delay: Delay the reboot for `delay` seconds.
         :return: None
         """
-        self._query_helper("system", "reboot", {"delay": delay})
+        self._query_helper(self.SYSTEM_SERVICE, "reboot", {"delay": delay})
 
     def turn_off(self) -> None:
         """Turn off the device."""
