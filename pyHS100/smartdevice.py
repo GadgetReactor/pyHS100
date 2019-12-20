@@ -87,6 +87,9 @@ class SmartDevice:
     STATE_OFF = "OFF"
 
     SYSTEM_SERVICE = "system"
+    # On newer devices, there are two services for "system" commands.
+    SYSTEM_ALT_SERVICE = "system"
+    SYSTEM_ALT_COMMAND = "get_sysinfo"
     NETIF_SERVICE = "netif"
     CLOUD_SERVICE = "cnCloud"
     EMETER_SERVICE = "emeter"
@@ -230,6 +233,28 @@ class SmartDevice:
         return self._query_helper(self.SYSTEM_SERVICE, "get_sysinfo")
 
     @property
+    def alt_sys_info(self) -> Dict[str, Any]:
+        """Return alternate system information on newer
+        devices, or the same thing as sysinfo on older devices.
+
+        :return: System information dict.
+        :rtype: dict
+        """
+
+        return self.get_alt_sysinfo()
+
+    def get_alt_sysinfo(self) -> Dict:
+        """Retrieve alternate system information on newer
+        devices, or the same thing as get_sysinfo on older
+        devices.
+
+        :return: sysinfo
+        :rtype dict
+        :raises SmartDeviceException: on error
+        """
+        return self._query_helper(self.SYSTEM_ALT_SERVICE, self.SYSTEM_ALT_COMMAND)
+
+    @property
     def model(self) -> str:
         """Return device model.
 
@@ -262,7 +287,7 @@ class SmartDevice:
         :param alias: New alias (name)
         :raises SmartDeviceException: on error
         """
-        self._query_helper(self.SYSTEM_SERVICE, "set_dev_alias", {"alias": alias})
+        self._query_helper(self.SYSTEM_ALT_SERVICE, "set_dev_alias", {"alias": alias})
 
     @property
     def icon(self) -> Dict:
@@ -415,7 +440,7 @@ class SmartDevice:
         :return: latitude and longitude
         :rtype: dict
         """
-        info = self.sys_info
+        info = self.alt_sys_info
         loc = {"latitude": None, "longitude": None}
 
         if "latitude" in info and "longitude" in info:
@@ -428,6 +453,16 @@ class SmartDevice:
             _LOGGER.warning("Unsupported device location.")
 
         return loc
+
+    def set_location(self, latitude: float, longitude: float) -> None:
+        """Set geographical location."""
+
+        self._query_helper(self.SYSTEM_ALT_SERVICE,
+                           "set_dev_location",
+                           {"latitude": latitude,
+                            "longitude": longitude,
+                            "latitude_i": latitude,
+                            "longitude_i": longitude})
 
     @property
     def rssi(self) -> Optional[int]:
@@ -635,33 +670,21 @@ class SmartDevice:
         connectivity.
         """
 
-        failed = []
         # This is the one described in the protocol document
-        try:
-            self._query_helper(self.CLOUD_SERVICE, "set_server_url", {"server": "0.0.0.0"})
-        except SmartDeviceException as e:
-            failed.append(e)
+        self._query_helper(self.CLOUD_SERVICE, "set_server_url", {"server": "0.0.0.0"})
 
         # This is the one that actually seems to work on my KL130
         try:
             self._query_helper(self.CLOUD_SERVICE, "set_n_server_url", {"server": "0.0.0.0"})
-        except SmartDeviceException as e:
-            failed.append(e)
+        except SmartDeviceException:
+            pass
 
         # These two are just for fun (they appear in the firmware binary)
         try:
             self._query_helper(self.CLOUD_SERVICE, "set_sefserver_url", {"server": "0.0.0.0"})
-        except SmartDeviceException as e:
-            failed.append(e)
-
-        try:
             self._query_helper(self.CLOUD_SERVICE, "set_n_sefserver_url", {"server": "0.0.0.0"})
-        except SmartDeviceException as e:
-            failed.append(e)
-
-        if len(failed) == 4:
-            raise SmartDeviceException("Could not find a supported set_*_url method: {}"
-               .format(str(", ".join(str(e) for e in failed))))
+        except SmartDeviceException:
+            pass
 
     @property
     def device_type(self) -> DeviceType:

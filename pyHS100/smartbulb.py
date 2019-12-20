@@ -61,6 +61,9 @@ class SmartBulb(SmartDevice):
 
     LIGHT_SERVICE = "smartlife.iot.smartbulb.lightingservice"
     EMETER_SERVICE = "smartlife.iot.common.emeter"
+    CLOUD_SERVICE = "smartlife.iot.common.cloud"
+    SYSTEM_ALT_SERVICE = "smartlife.iot.common.system"
+    SYSTEM_ALT_COMMAND = "get_details"
 
     def __init__(
         self,
