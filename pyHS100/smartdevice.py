@@ -333,7 +333,7 @@ class SmartDevice:
 
         return self._query_helper(self.NETIF_SERVICE, "get_stainfo")
 
-    def set_wifi(self, ssid: str, password: str, key_type: int=3) -> None:
+    def set_wifi(self, ssid: str, password: str, key_type: int = 3) -> None:
         """Set the wireless network that the device will use.
 
         This command will allow you to provision a factory-
