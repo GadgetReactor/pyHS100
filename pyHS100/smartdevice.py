@@ -622,6 +622,48 @@ class SmartDevice:
         raise NotImplementedError("Device subclass needs to implement this.")
 
     @property
+    def cloud(self) -> dict:
+        """Return information about the cloud connectivity for this device.
+
+        :return: dict with cloud information (server, username, connection status)
+        :rtype: dict
+        """
+        return self._query_helper(self.CLOUD_SERVICE, "get_info")
+
+    def disconnect_cloud(self) -> None:
+        """Sets the server URL to 0.0.0.0, disabling cloud
+        connectivity.
+        """
+
+        failed = []
+        # This is the one described in the protocol document
+        try:
+            self._query_helper(self.CLOUD_SERVICE, "set_server_url", {"server": "0.0.0.0"})
+        except SmartDeviceException as e:
+            failed.append(e)
+
+        # This is the one that actually seems to work on my KL130
+        try:
+            self._query_helper(self.CLOUD_SERVICE, "set_n_server_url", {"server": "0.0.0.0"})
+        except SmartDeviceException as e:
+            failed.append(e)
+
+        # These two are just for fun (they appear in the firmware binary)
+        try:
+            self._query_helper(self.CLOUD_SERVICE, "set_sefserver_url", {"server": "0.0.0.0"})
+        except SmartDeviceException as e:
+            failed.append(e)
+
+        try:
+            self._query_helper(self.CLOUD_SERVICE, "set_n_sefserver_url", {"server": "0.0.0.0"})
+        except SmartDeviceException as e:
+            failed.append(e)
+
+        if len(failed) == 4:
+            raise SmartDeviceException("Could not find a supported set_*_url method: {}"
+               .format(str(", ".join(str(e) for e in failed))))
+
+    @property
     def device_type(self) -> DeviceType:
         """Return the device type."""
         return self._device_type
