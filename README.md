@@ -1,3 +1,6 @@
+**This project is not updated anymore and should be considered abandoned.
+Future developments will be done in asyncio-using fork, [python-kasa](https://github.com/python-kasa/python-kasa).**
+
 # pyHS100
 
 [![PyPI version](https://badge.fury.io/py/pyHS100.svg)](https://badge.fury.io/py/pyHS100)
