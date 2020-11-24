@@ -10,8 +10,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class Discover:
-    DISCOVERY_QUERY = {"system": {"get_sysinfo": None},
-                       "emeter": {"get_realtime": None}}
+    DISCOVERY_QUERY = {"system": {"get_sysinfo": None}}
 
     @staticmethod
     def discover(protocol: TPLinkSmartHomeProtocol = None,
