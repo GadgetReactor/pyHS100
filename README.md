@@ -1,4 +1,5 @@
 **This project is not updated anymore and should be considered abandoned.
+The last released pypi version is in the `goodbye_release` branch.
 Future developments will be done in asyncio-using fork, [python-kasa](https://github.com/python-kasa/python-kasa).**
 
 # pyHS100
