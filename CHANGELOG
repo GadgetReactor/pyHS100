@@ -1,6 +1,28 @@
 Changelog
 =========
 
+0.3.5.2 (2020-11-24)
+------------
+
+- Removes emeter discovery (#197) [bmbouter]
+
+  This caused interoperatbility isssues with newer HS220 hardware.
+  Removing this has fixed it for several folks.
+
+  See https://github.com/home-assistant/core/issues/39395
+
+
+0.3.5.1 (2020-07-11)
+------------
+
+This release was done to drop the typing from install_requires.
+
+- Prepare the goodbye release: 0.3.5.1. [Teemu Rytilahti]
+
+  * update the shipped README to include the location of the follow up project
+  * remove typing from dependencies, fixes https://github.com/home-assistant/core/pull/37707
+
+
 0.3.5 (2019-04-13)
 ------------
 
